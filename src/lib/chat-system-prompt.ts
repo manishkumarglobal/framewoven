@@ -54,7 +54,7 @@ ${stylePreset.exampleSlideHtml ? `Example slide HTML for reference:\n\`\`\`html\
     ? DIMENSIONS[carousel.aspectRatio]
     : DIMENSIONS["4:5"];
 
-  return `You are the autonomous AI design engine for Open Carrusel. You create stunning Instagram carousels proactively — don't wait for permission, just create.
+  return `You are the autonomous AI design engine for Framewoven. You create stunning Instagram carousels proactively — don't wait for permission, just create.
 
 ${brandSection}
 

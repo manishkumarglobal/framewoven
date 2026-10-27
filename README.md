@@ -1,223 +1,210 @@
 <div align="center">
 
-# Open Carrusel
+# Framewoven
 
-### Chat with Claude. Design Instagram carousels. Export pixel-perfect PNGs.
+### An AI-powered creative studio for branded social content.
 
-**Local-first. Open source. One command to start.**
+**Chat with Claude. Design on-brand Instagram carousels. Export pixel-exact PNGs.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-1a1a2e.svg?style=flat-square)](./LICENSE)
-[![Built with Claude](https://img.shields.io/badge/built%20with-Claude-e94560.svg?style=flat-square)](https://claude.ai)
-[![Made by tododeia](https://img.shields.io/badge/made%20by-tododeia-1a1a2e.svg?style=flat-square)](https://www.tododeia.com)
+[![CI](https://github.com/manishkumarglobal/framewoven/actions/workflows/ci.yml/badge.svg)](https://github.com/manishkumarglobal/framewoven/actions/workflows/ci.yml)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000.svg?style=flat-square)](https://nextjs.org)
 [![React 19](https://img.shields.io/badge/React-19-149eca.svg?style=flat-square)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6.svg?style=flat-square)](https://www.typescriptlang.org)
-[![Tailwind v4](https://img.shields.io/badge/Tailwind-v4-38bdf8.svg?style=flat-square)](https://tailwindcss.com)
 
-![Dashboard](./docs/screenshots/dashboard.png)
+![Framewoven dashboard](./docs/screenshots/dashboard.png)
 
 </div>
 
 ---
 
-## 🔱 About this fork
+## What is Framewoven?
 
-This repository is a **maintained fork** of
-[Hainrixz/open-carrusel](https://github.com/Hainrixz/open-carrusel), the original
-Open Carrusel project by [tododeia](https://www.tododeia.com). All credit for the
-product, its design, and its original implementation belongs to the upstream
-project and its contributors — see [Acknowledgments](#-acknowledgments) and
-[About the maker](#-about-the-maker) below.
+Framewoven is a local-first, AI-assisted tool for creating branded carousel content.
+You describe what you want in a chat panel, and a Claude design agent writes each slide as HTML and CSS using your brand's colors, fonts, and style.
+Slides render live in the editor and export as PNGs at Instagram's exact pixel dimensions.
 
-The fork keeps the original philosophy intact: local-first, chat-driven, HTML
-slides, JSON storage, no accounts, no cloud. It is not a redesign and not a
-feature expansion.
-
-What it adds is a small set of reliability, rendering-correctness, and workflow
-improvements, each tracked as an Issue and merged through a reviewed pull
-request. Fork-specific changes are documented in [`CHANGELOG.md`](./CHANGELOG.md),
-and the upstream sync model is documented in
-[`docs/MAINTAINING-THIS-FORK.md`](./docs/MAINTAINING-THIS-FORK.md).
-
-Licensing is unchanged: MIT, with the original copyright notice preserved.
-
----
+Everything runs on your own machine.
+Your carousels, brand settings, and uploads are plain files in the project folder, with no accounts and no cloud storage.
 
 ## Table of contents
 
-- [About this fork](#-about-this-fork)
-- [Why Open Carrusel](#-why-open-carrusel)
-- [See it in action](#-see-it-in-action)
-- [Quickstart (60 seconds)](#-quickstart-60-seconds)
-- [What you can do](#-what-you-can-do)
-- [How the AI agent works](#-how-the-ai-agent-works)
-- [Slash commands](#-slash-commands)
-- [Architecture](#-architecture)
-- [Tech stack](#-tech-stack)
-- [Project structure](#-project-structure)
-- [Configuration](#%EF%B8%8F-configuration)
-- [Troubleshooting](#-troubleshooting)
-- [Roadmap](#%EF%B8%8F-roadmap)
-- [Contributing](#-contributing)
-- [Acknowledgments](#-acknowledgments)
-- [About the maker](#-about-the-maker)
-- [License](#-license)
+- [What you can do today](#what-you-can-do-today)
+- [Requirements](#requirements)
+- [Install and run](#install-and-run)
+- [Your data](#your-data)
+- [How the design agent works](#how-the-design-agent-works)
+- [Slash commands and scripts](#slash-commands-and-scripts)
+- [Architecture](#architecture)
+- [Project structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [Planned capabilities](#planned-capabilities)
+- [Contributing](#contributing)
+- [Origin and license](#origin-and-license)
 
 ---
 
-## ✨ Why Open Carrusel
+## What you can do today
 
-Designing Instagram carousels eats hours. You either:
+![Framewoven editor](./docs/screenshots/editor.png)
 
-- Pay $20–60/month for a closed-source tool that limits how creative you can get
-- Wrestle Canva templates that everyone else also uses
-- Hand-craft slides in Figma and lose your weekend
+- **Design slides by chatting.**
+  The editor's chat panel sends your request to a Claude design agent, which creates, rewrites, or deletes slides in the open carousel.
+  Ask for a whole carousel, or name a slide to change ("make slide 3 more minimal").
+  Replies arrive one complete message at a time, and new slides appear in the filmstrip as the agent saves them.
+- **HTML and CSS slides.**
+  Each slide is real HTML and CSS, rendered in a sandboxed iframe for preview and screenshotted by the same rendering code for export, so the preview matches the PNG.
+- **Brand configuration.**
+  A setup dialog saves your brand name, five colors, heading and body fonts from a curated list of Google Fonts, an optional logo, and style keywords.
+  Once a brand name is set, every chat request gives these to the design agent.
+- **Brand fonts in preview and export.**
+  Preview loads fonts from Google Fonts, and export embeds them into each slide so the PNGs use the real typefaces.
+- **Three Instagram formats.**
+  Each carousel is 1:1 (1080x1080), 4:5 (1080x1350, the default), or 9:16 (1080x1920).
+  You choose the format when creating a carousel and can change it from the editor toolbar.
+  Changing it does not reflow slides that were designed for the previous format.
+- **Reference images.**
+  Attach PNG, JPG, or WebP images in the chat panel, and the design agent can open them to match their style.
+- **Reorder and undo.**
+  Drag slides in the filmstrip to reorder them.
+  Each slide keeps its last five versions, and its Undo button steps back one version at a time.
+- **Templates.**
+  Save a carousel as a template from the editor toolbar, then start new carousels from it in the dashboard's Templates tab.
+- **Duplicate carousels** from the dashboard.
+- **Safe-zone overlay** on the editor preview, showing where Instagram's profile-grid crop and on-screen controls cover the slide.
+- **Full-window preview** that steps through slides with the arrow keys.
+- **Captions and hashtags.**
+  Ask the design agent for a caption, and it saves the caption and hashtags to the carousel, where the editor shows them with copy buttons.
+- **PNG export.**
+  The Export button renders every slide in headless Chromium at the carousel's exact dimensions and downloads them as a ZIP.
+  If an export fails, the editor tells you what went wrong.
 
-**Open Carrusel takes a different bet.** You chat with Claude — the same model many designers already trust — and it generates real HTML/CSS slides that get screenshotted to PNGs at exact Instagram dimensions. Slides are unique, on-brand, and pixel-perfect. Everything runs on your laptop. Nothing is sent to a cloud you don't control.
+## Requirements
 
-It's open source under MIT. Fork it, tweak the system prompt, ship your own variant. No accounts. No subscriptions. No vendor lock-in.
+- **Node.js 20 or later**, with npm.
+- **Git**, to clone the repository.
+- **Claude Code**, installed and signed in, for the design agent.
+  Framewoven runs the `claude` command-line tool on your machine, so the agent uses your existing Claude Code account and its usage limits.
+  Install it from the [Claude Code documentation](https://docs.anthropic.com/en/docs/claude-code), then run `claude` once to sign in.
+  Each chat request is capped at USD 1.00 of Claude usage.
+- **About 300 MB of disk space** for the Chromium build that PNG export uses, downloaded during setup.
 
----
+Framewoven runs on macOS, Linux, and Windows.
 
-## 🎬 See it in action
+Without Claude Code, the app still opens and you can set up your brand, manage carousels and templates, reorder and undo slides, and export existing slides.
+You cannot create new slide content, because slides are written by the design agent.
 
-**Dashboard** — your carousels, templates, and one-click export.
+## Install and run
 
-![Dashboard](./docs/screenshots/dashboard.png)
+The first setup takes a minute or two while dependencies and Chromium download.
+Later launches take seconds.
 
-**Editor** — chat panel (left), live preview (center), drag-reorderable filmstrip (bottom).
-
-![Editor](./docs/screenshots/editor.png)
-
-> The slides shown above were generated by chatting with Claude. No templates, no copy-paste — every layout, color, and font choice came from a conversation.
-
----
-
-## 🚀 Quickstart (60 seconds)
-
-> First run takes 1–2 minutes (Puppeteer downloads ~300 MB of Chromium for PNG export). After that, every launch is seconds.
-
-### One-command path (recommended)
-
-1. **Install [Claude Code](https://docs.anthropic.com/en/docs/claude-code)** and authenticate.
-2. **Clone and open the repo** in Claude Code:
-   ```bash
-   git clone https://github.com/Hainrixz/open-carrusel.git
-   cd open-carrusel
-   claude
-   ```
-3. In the Claude Code prompt, type:
-   ```
-   /start
-   ```
-
-That's it. Dependencies install, the dev server starts, your browser opens. Now design carousels by chatting.
-
-### Manual path (if you don't use Claude Code)
+### With Claude Code (recommended)
 
 ```bash
-git clone https://github.com/Hainrixz/open-carrusel.git
-cd open-carrusel
-npm run setup        # installs deps + seeds /data/
-npm run dev          # starts http://localhost:3000
+git clone https://github.com/manishkumarglobal/framewoven.git
+cd framewoven
+claude
 ```
 
-You won't get the AI chat without Claude Code installed (the in-app agent shells out to the `claude` CLI), but the editor and export still work for static slides.
-
----
-
-## 🧰 What you can do
-
-- **Three-panel editor** designed for flow: chat (left), live preview (center), drag-reorderable slide filmstrip (bottom).
-- **Generate slides by chatting**: "Make me a 5-slide carousel about productivity habits — bold sans-serif, dark mode, accent red." Watch them stream in.
-- **Iterate per slide**: "Make slide 3 more minimal", "Change the accent to teal", "Swap the hook for something punchier."
-- **Three Instagram aspect ratios** ready to go: 1:1 (1080×1080), 4:5 (1080×1350), 9:16 (1080×1920).
-- **Brand config** — name, color palette, fonts, logo, style keywords. Claude reads it before every generation so output stays on-brand.
-- **Templates** — save any carousel as a template, reuse it for the next one.
-- **Reference images** — drop in screenshots of carousels you love. Claude studies them to match style.
-- **Drag to reorder** slides via dnd-kit. Undo per-slide if a tweak goes sideways (version history per slide).
-- **Safe-zone overlay** to verify nothing important crops behind Instagram's UI.
-- **Fullscreen preview** for the final review.
-- **One-click export** — Puppeteer screenshots each slide HTML at the exact pixel dimensions Instagram expects, zips them, downloads.
-- **Captions + hashtags** generator built into the editor.
-- **All local** — slides, brand, uploads, exports all live in `/data/` and `/public/uploads/`. Nothing is sent to a cloud you don't control. The only network call is when Claude Code talks to Anthropic.
-
----
-
-## 💬 How the AI agent works
-
-The in-app agent is the **Claude CLI** spawned as a subprocess from `/api/chat` with `--allowedTools Bash WebFetch Read`. Messages stream back to the browser via Server-Sent Events.
-
-When you ask for a slide, Claude:
-
-1. Reads your brand config + active carousel state from the system prompt
-2. Writes the slide as a complete HTML/CSS string
-3. POSTs it to `/api/carousels/[id]/slides` via `curl` (using its `Bash` tool)
-4. The new slide appears in your filmstrip seconds later
-
-### Example chat
+Then, at the Claude Code prompt:
 
 ```
-You    > Create a 5-slide carousel about “3 morning habits that
-         actually move the needle.” Punchy, dark mode, accent red,
-         portrait 4:5.
-
-Claude > Coming up. I'll build a hook slide, three habit slides,
-         and a CTA. Working...
-         [streams 5 HTML slides into the filmstrip]
-
-You    > Slide 3 — the headline is too long. Cut it in half and
-         move the icon to the top.
-
-Claude > Done.
-         [updates that slide; you can /undo if you preferred the old one]
+/start
 ```
 
-### How the slides become PNGs
+`/start` installs dependencies, seeds empty data files, launches the dev server in the background, and opens http://localhost:3000.
+Pass a port to use a different one, for example `/start 3001`.
+Stop the server with `/stop`.
 
-Slides are stored as **body-level HTML** (no `<html>`/`<head>`/`<!DOCTYPE>`). The shared function `wrapSlideHtml()` in [`src/lib/slide-html.ts`](./src/lib/slide-html.ts) wraps that body into a full document — adding font loading, dimension constraints, and box-sizing reset — and serves it both:
-
-- to a **sandboxed `<iframe>`** for live preview in the editor
-- to **Puppeteer (headless Chromium)** for export, screenshot at exact Instagram pixel dimensions, zipped, downloaded
-
-Because the same wrap function feeds both paths, what you see is exactly what you export. No surprises.
-
----
-
-## 🛠 Slash commands
-
-Type these inside Claude Code:
-
-| Command         | What it does                                                                                            |
-|-----------------|---------------------------------------------------------------------------------------------------------|
-| `/start [port]` | Install + seed + run + open browser. Idempotent — re-running on a healthy install is seconds.           |
-| `/stop [port]`  | Kill the dev server. Defaults to `:3000`, accepts a port arg matching `/start`.                         |
-| `/reset`        | Wipe local carousels, templates, brand config, uploads, exports — and re-seed defaults. Asks first.    |
-| `/doctor`       | Run setup diagnostics: Node version, Claude CLI on PATH, deps installed, data files seeded, port free. |
-
-You can also run them outside Claude Code:
+### Without Claude Code's slash commands
 
 ```bash
-npm run setup     # equivalent to /start (skips the browser-open + background server bits)
-npm run dev       # start the dev server
-npm run build     # production build
-npm run doctor    # run scripts/doctor.mjs (works pre-`npm install`)
+git clone https://github.com/manishkumarglobal/framewoven.git
+cd framewoven
+npm run setup
 ```
 
----
+`npm run setup` installs dependencies, downloads Chromium, seeds empty data files, looks for the Claude CLI, and then starts the dev server at http://localhost:3000 in the foreground.
+Press Ctrl+C to stop it, and run `npm run dev` to start it again later.
+To use another port, run `PORT=3001 npm run dev`.
 
-## 🏗 Architecture
+If setup cannot find the Claude CLI, it prints a warning and the app runs without the design agent.
+Set `CLAUDE_CLI_PATH` in `.env.local` to the full path of your `claude` executable, then restart the dev server.
+
+## Your data
+
+Application source and your data are kept apart.
+Git tracks only the source; everything you create stays local and is ignored by Git.
+
+| Location | Contents |
+|---|---|
+| `data/brand.json` | Brand configuration |
+| `data/carousels.json` | Carousels and their slides, including undo history and captions |
+| `data/templates.json` | Saved templates |
+| `data/.font-cache/` | Cached Google Fonts CSS used by export |
+| `public/uploads/` | Uploaded logos and reference images |
+| `.env.local` | Local configuration, such as `CLAUDE_CLI_PATH` |
+
+Chat transcripts are stored in your browser's local storage for each carousel.
+Exports are not stored; each export is built in memory and downloaded as a ZIP.
+
+Updating Framewoven with `git pull` does not touch these files.
+To back up your work, copy `data/`, `public/uploads/`, and `.env.local`.
+`/reset` deletes your carousels, templates, brand, and uploads and re-seeds empty defaults, after asking for confirmation.
+
+## How the design agent works
+
+When you send a chat message, `/api/chat` starts the Claude CLI as a subprocess with `--allowedTools Bash WebFetch Read` and streams its replies back to the browser as Server-Sent Events.
+The agent's system prompt includes your brand configuration, the open carousel's slides, and the address of this running app.
+
+The agent then works through the app's own API:
+
+1. It writes each slide as body-level HTML and CSS.
+2. It saves the slide by calling `/api/carousels/[id]/slides` with `curl`, through its `Bash` tool.
+3. The editor refreshes while the agent works, so new and changed slides appear in the filmstrip.
+
+`WebFetch` lets the agent research a topic while designing, and `Read` lets it open your reference images.
+
+### From slide to PNG
+
+Slides are stored as body-level HTML, without `<html>`, `<head>`, or `<!DOCTYPE>`.
+`wrapSlideHtml()` in [`src/lib/slide-html.ts`](./src/lib/slide-html.ts) wraps that body into a full document with font loading and fixed dimensions.
+The same function feeds both the sandboxed preview iframe and the Puppeteer export, which screenshots each slide at its exact pixel size.
+
+## Slash commands and scripts
+
+Inside Claude Code:
+
+| Command | What it does |
+|---|---|
+| `/start [port]` | Set up if needed, launch the dev server in the background, and open the browser. Safe to re-run. |
+| `/stop [port]` | Stop the server listening on that port, 3000 by default. |
+| `/reset` | Delete local carousels, templates, brand, and uploads, then re-seed defaults. Asks first. |
+| `/doctor` | Check Node, the Claude CLI, dependencies, data files, and port 3000. |
+
+From a terminal:
+
+| Script | What it does |
+|---|---|
+| `npm run setup` | Install dependencies and Chromium, seed data, find the Claude CLI, then start the dev server. |
+| `npm run dev` | Start the dev server. |
+| `npm run build` / `npm start` | Build and run a production server. |
+| `npm run doctor` | Run the environment check; works before `npm install`. |
+| `npm run typecheck`, `npm run lint`, `npm test` | The quality gate used in CI. |
+
+## Architecture
 
 ```mermaid
 flowchart LR
-  U(["Browser :3000"])
-  C["Chat Panel"]
-  P["Slide Preview<br/>(sandboxed iframe)"]
-  F["Filmstrip<br/>(dnd-kit)"]
+  U(["Browser"])
+  C["Chat panel"]
+  P["Slide preview<br/>(sandboxed iframe)"]
+  F["Filmstrip"]
   API["/api/chat<br/>SSE streaming/"]
   CCLI["Claude CLI<br/>subprocess"]
   SLIDES["/api/carousels/.../slides/"]
-  DATA[("/data/*.json<br/>async-mutex<br/>atomic writes")]
+  DATA[("data/*.json<br/>locked, atomic writes")]
   EXP["/api/.../export/"]
   PUP["Puppeteer<br/>(headless Chromium)"]
   ZIP{{"ZIP of PNGs"}}
@@ -225,9 +212,9 @@ flowchart LR
   U --> C & P & F
   C -- "POST chat" --> API
   API -- "spawn" --> CCLI
-  CCLI -. "SSE" .-> API
+  CCLI -. "stream" .-> API
   API -. "SSE" .-> C
-  CCLI -- "curl POST slide HTML" --> SLIDES
+  CCLI -- "curl slide HTML" --> SLIDES
   SLIDES <--> DATA
   P <--> SLIDES
   F <--> SLIDES
@@ -237,201 +224,86 @@ flowchart LR
   ZIP --> U
 ```
 
-**Why these choices:**
+- **Local-first and single-user.** A localhost web app reading and writing local files, with no database, accounts, or cloud services.
+- **Claude CLI as the agent.** The agent reuses your Claude Code sign-in instead of requiring a separate API key.
+- **Slides as HTML.** HTML and CSS are more expressive than a canvas or a layout DSL, and the same markup drives preview and export.
+- **Sandboxed preview.** Preview iframes use `sandbox=""`, so slide markup cannot run scripts in the editor.
+- **JSON storage with locking.** All reads and writes go through [`src/lib/data.ts`](./src/lib/data.ts), which serializes changes per file and writes atomically, and refuses to overwrite a file that no longer parses.
 
-- **Local-first, single-user.** The whole app is a localhost web app talking to local files. No cloud, no auth, no database.
-- **Claude CLI as the agent.** Lets us reuse the user's existing Claude Code authentication, capabilities, and context. The subprocess gets `Bash` (to `curl` the slide-write endpoints) and `WebFetch` (for research while designing).
-- **Slides as HTML.** Claude already writes great HTML/CSS — way more flexible than canvas, way easier to debug than a JSON DSL. The same HTML powers preview *and* export, so what you see is what you ship.
-- **Sandboxed iframes.** No `<script>` tags allowed (enforced by the iframe `sandbox=""` attribute). Slides can't run code or escape their box.
-- **JSON file storage with async-mutex + atomic writes.** No SQLite, no Postgres. Reads and writes go through [`src/lib/data.ts`](./src/lib/data.ts) with proper locking, and writes are tmp-file + rename to avoid torn JSON.
+[`CLAUDE.md`](./CLAUDE.md) documents the architecture and conventions for AI assistants working on this codebase.
 
-For more, see [`CLAUDE.md`](./CLAUDE.md) — the architecture doc tuned for AI assistants working on this codebase.
-
----
-
-## 📦 Tech stack
-
-| Layer        | Tool                                                                              |
-|--------------|-----------------------------------------------------------------------------------|
-| Framework    | [Next.js 16](https://nextjs.org) (Turbopack), [React 19](https://react.dev)       |
-| Language     | TypeScript 5                                                                      |
-| Styling      | [Tailwind CSS v4](https://tailwindcss.com) (CSS-first config in `globals.css`)    |
-| UI primitives| [Radix UI](https://www.radix-ui.com), [lucide-react](https://lucide.dev)          |
-| Drag/drop    | [@dnd-kit](https://dndkit.com)                                                    |
-| AI agent     | [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) subprocess           |
-| Image export | [Puppeteer](https://pptr.dev), [Sharp](https://sharp.pixelplumbing.com)           |
-| Zipping      | [Archiver](https://github.com/archiverjs/node-archiver)                           |
-| Storage      | JSON files + [async-mutex](https://github.com/DirtyHairy/async-mutex)             |
-| Animation    | CSS-first ([Emil Kowalski's design philosophy](https://animations.dev))           |
-
----
-
-## 📁 Project structure
+## Project structure
 
 ```
-open-carrusel/
-├── .claude/
-│   └── commands/             ← /start, /stop, /reset, /doctor (Claude Code slash commands)
-├── data/                     ← user state (gitignored): brand, carousels, templates, exports
-├── docs/screenshots/         ← README assets
-├── public/uploads/           ← user uploads (gitignored): logos, reference images
-├── scripts/
-│   ├── setup.mjs             ← npm install + seed data dirs + Claude CLI detection (cross-platform)
-│   ├── dev-server.mjs        ← launches the dev server detached (zero deps, survives its caller)
-│   └── doctor.mjs            ← env diagnostic (zero deps, runs pre-install)
+framewoven/
+├── .claude/commands/     Claude Code slash commands: /start, /stop, /reset, /doctor
+├── .github/workflows/    CI: typecheck, lint, test, build
+├── data/                 Your data (ignored by Git)
+├── docs/                 Maintainer guide, provenance, screenshots
+├── public/uploads/       Your uploads (ignored by Git)
+├── scripts/              setup, dev-server launcher, doctor
 ├── src/
-│   ├── app/
-│   │   ├── api/              ← every backend route (chat, carousels, slides, export, brand, ...)
-│   │   ├── carousel/[id]/    ← editor page
-│   │   ├── globals.css       ← Tailwind v4 theme + Emil-style motion tokens
-│   │   ├── layout.tsx
-│   │   └── page.tsx          ← dashboard page
-│   ├── components/
-│   │   ├── brand/            ← BrandSetup, ColorPicker, FontSelector, LogoUpload
-│   │   ├── chat/             ← ChatPanel, ChatMessage, ChatInput, ReferenceImages
-│   │   ├── editor/           ← CarouselPreview, SlideFilmstrip, SlideRenderer, ExportButton, ...
-│   │   ├── layout/           ← TopBar
-│   │   ├── templates/        ← TemplateGallery, TemplateCard
-│   │   └── ui/               ← Button, Input, Badge, ConfirmDialog, CreateCarouselDialog
-│   ├── lib/
-│   │   ├── chat-system-prompt.ts   ← dynamic system prompt (brand + carousel context)
-│   │   ├── slide-html.ts            ← wrapSlideHtml() — the rendering contract
-│   │   ├── carousels.ts             ← carousel + slide CRUD with version history
-│   │   ├── data.ts                  ← JSON storage with async-mutex + atomic writes
-│   │   ├── claude-path.ts           ← portable Claude CLI discovery
-│   │   └── ...
-│   └── types/                ← shared TypeScript types
-├── CLAUDE.md                 ← architecture doc for AI assistants working on this code
-├── LICENSE                   ← MIT
-├── README.md                 ← you are here
-├── next.config.ts
-├── package.json
-└── tsconfig.json
+│   ├── app/              Pages and API routes
+│   ├── components/       Brand, chat, editor, layout, template, and UI components
+│   ├── lib/              Storage, rendering, export, system prompt, Claude CLI discovery
+│   └── types/            Shared TypeScript types
+└── tests/                Vitest suites
 ```
 
----
+## Troubleshooting
 
-## ⚙️ Configuration
+**Setup says Node is too old.**
+Install Node 20 or later from [nodejs.org](https://nodejs.org) or with [nvm](https://github.com/nvm-sh/nvm).
 
-### Environment variables (`.env.local`)
-
-Created automatically by `scripts/setup.mjs` if it can find your Claude CLI. You can override:
-
-```bash
-CLAUDE_CLI_PATH=/path/to/claude   # set if `which claude` doesn't find it
-```
-
-On Windows, run `where claude` in PowerShell to find the path (typically `C:\Users\<you>\AppData\Roaming\npm\claude.cmd`), then set `CLAUDE_CLI_PATH` in `.env.local`.
-
-### Brand config
-
-Set on first run (or via the gear icon in the top bar). Stored at `/data/brand.json`. Fields:
-
-- **Name** — your handle / company / project
-- **Colors** — primary, secondary, accent, background, surface
-- **Fonts** — heading + body (Google Fonts; the `/api/fonts` endpoint serves a curated list)
-- **Logo** — optional; used by Claude when you ask for branded slides
-- **Style keywords** — free-text style hints ("editorial, minimalist, warm tones") that get injected into Claude's system prompt
-
-### Templates
-
-Save any carousel as a template via the bookmark icon in the editor toolbar. Templates appear in the dashboard's Templates tab. Stored at `/data/templates.json`.
-
-### Reference images
-
-Drop screenshots into the chat panel's "Reference Images" section. Stored under `/public/uploads/`. Claude Code can read them via `WebFetch` of the local URL when designing.
-
----
-
-## 🩺 Troubleshooting
-
-**`/start` says "Node v18 detected, need ≥20."**
-Next.js 16 requires Node 20+. Install via [nodejs.org](https://nodejs.org) or [nvm](https://github.com/nvm-sh/nvm).
-
-**`/start` says "Claude CLI not found."**
-Install [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and authenticate. The setup script searches `~/.local/bin/claude`, `/usr/local/bin/claude`, `/opt/homebrew/bin/claude`, `~/.npm-global/bin/claude`, and `$CLAUDE_CLI_PATH`. If yours lives elsewhere, set `CLAUDE_CLI_PATH` in `.env.local`.
+**The chat panel says to connect the Claude CLI.**
+Install Claude Code and sign in by running `claude` once.
+Setup looks for `claude` in `~/.local/bin`, `/usr/local/bin`, `/opt/homebrew/bin`, `~/.npm-global/bin`, and on your `PATH`; on Windows it also checks the npm and Programs folders.
+If yours is elsewhere, set `CLAUDE_CLI_PATH` in `.env.local` and restart the dev server.
+On Windows, `where claude` in PowerShell shows the path.
 
 **Port 3000 is in use.**
-Run `/stop` to kill whatever's there, or run `/start 3001` to use a different port.
+Run `/stop` if it is a previous Framewoven server, or use another port with `/start 3001` or `PORT=3001 npm run dev`.
 
-**Export fails or hangs.**
-Likely a Puppeteer/Chromium issue. Try `rm -rf node_modules && npm install` to re-trigger the Chromium download. On Linux you may need `apt install` of common Chromium dependencies (libnss3, libatk1.0-0, libxss1, etc.).
+**Export fails.**
+The editor shows the reason.
+If Chromium is missing or fails to launch, re-run `npm run setup`, which downloads Chromium and test-launches it.
+On Linux you may need Chromium's system libraries, such as `libnss3`, `libatk1.0-0`, and `libxss1`.
 
-**Slides look fine in preview but export looks different.**
-That shouldn't happen — both go through `wrapSlideHtml()`. If it does, file an issue with the slide HTML attached.
+**Generated slides ignore my brand.**
+Open brand setup with the gear icon and confirm a brand name, colors, and style keywords are saved.
+Brand details reach the design agent only when a brand name is set.
 
-**The AI keeps generating slides that ignore my brand colors.**
-Open the brand setup (gear icon) and confirm your colors and style keywords are saved. They're injected into Claude's system prompt on every chat request via `chat-system-prompt.ts`.
+**Something else.**
+Run `/doctor` or `npm run doctor` for an environment check, and [open an Issue](https://github.com/manishkumarglobal/framewoven/issues) if the problem persists.
 
-**Run `/doctor`** for a full env audit — it'll tell you which of the above applies.
+## Planned capabilities
 
----
+These are planned directions, not shipped features.
+Each will be tracked as an Issue and listed in the [changelog](./CHANGELOG.md) only when released.
 
-## 🗺️ Roadmap
+- **Multiple independent brand profiles**, so one installation can serve several brands.
+- **LinkedIn-ready PDF exports** for document-style carousel posts.
+- **Improved content workflows** for planning and iterating on a series of posts.
+- **Reusable branded templates** that carry a brand's layout system, beyond today's saved-carousel templates.
+- **Additional platform support** beyond Instagram's formats.
 
-Open ideas — PRs welcome. Tick what you ship, add your own.
+## Contributing
 
-- [ ] **Multi-language slide generation** — Spanish-LATAM voice presets so creators don't fight the AI's English defaults
-- [ ] **Reels storyboard mode** — vertical 9:16 with optional text-on-clip annotations
-- [ ] **Twitter/X thread export** — same brand voice, different surface
-- [ ] **Notion / Linear export** — push the carousel as a doc with each slide as a section
-- [ ] **Theme presets gallery** — community-curated `style-presets.json` you can one-click apply
-- [ ] **Per-slide AI chat** — a smaller chat thread scoped to a single slide
-- [ ] **Hosted demo** — for people who want to try before installing Claude Code
+Framewoven follows a no-ticket, no-work process: open an Issue first for anything material, and reference it from your pull request with `Closes #N`.
+Before opening a pull request, run the full gate:
 
----
+```bash
+npm run typecheck && npm run lint && npm test && npm run build
+```
 
-## 🤝 Contributing
+[`docs/MAINTAINING.md`](./docs/MAINTAINING.md) covers branching, review, testing, changelog, and release practice.
+[`CLAUDE.md`](./CLAUDE.md) covers code conventions, including the slide rendering contract between preview and export.
 
-PRs welcome. The bar:
+## Origin and license
 
-- **Run the full gate** before opening a PR — `npm run typecheck && npm run lint && npm test && npm run build` should all pass clean. `npm run doctor` checks your local environment.
-- **Open an Issue first** for anything material, and reference it from the PR (`Closes #N`). See [`docs/MAINTAINING-THIS-FORK.md`](./docs/MAINTAINING-THIS-FORK.md).
-- **Update [`CHANGELOG.md`](./CHANGELOG.md)** under `[Unreleased]` when behavior changes.
-- **Follow the file conventions** in [`CLAUDE.md`](./CLAUDE.md) — components ≤ 300 lines, types in `src/types/`, libs in `src/lib/`, `cn()` from `src/lib/utils.ts` for class merging, all data writes through `src/lib/data.ts`.
-- **Don't touch the slide rendering contract.** `wrapSlideHtml()` in `src/lib/slide-html.ts` is the seam between preview and export. Change it carefully and test the export round-trip.
-- **Animations follow [Emil Kowalski's philosophy](https://animations.dev)** — CSS-first, custom easings (already defined as CSS variables in `globals.css`), respect `prefers-reduced-motion`. See the `oc-*` utility classes already in `globals.css` before authoring new ones.
+Framewoven was originally derived from [Open Carrusel](https://github.com/Hainrixz/open-carrusel), an MIT-licensed project, through a maintained fork.
+It is now independently maintained.
+Its Git history, original authorship, and the original copyright notice are preserved.
+See [`docs/PROVENANCE.md`](./docs/PROVENANCE.md) for the source baseline, attribution, and historical records.
 
-Good first contributions: roadmap items above, more brand templates, accessibility audits, real screenshots/demos for the README, translations.
-
----
-
-## 🙏 Acknowledgments
-
-- **[Emil Kowalski](https://emilkowal.ski)** — animation philosophy that shaped the whole motion system. The `oc-*` CSS classes encode his design-engineering principles (custom easings, restraint over excess, `@starting-style` over JS for entries).
-- **[Anthropic](https://www.anthropic.com)** — Claude (the model) and Claude Code (the CLI) are the brain of the in-app agent.
-- **[Vercel](https://vercel.com)** — Next.js + Turbopack make local-first React apps feel snappy.
-- **[Radix UI](https://www.radix-ui.com)** + **[shadcn/ui](https://ui.shadcn.com)** — the patterns underneath the dialog/button/input primitives.
-- **[dnd-kit](https://dndkit.com)** — the only sane drag-and-drop story in React.
-- **[Puppeteer](https://pptr.dev)** + **[Sharp](https://sharp.pixelplumbing.com)** — the export pipeline.
-
----
-
-## 👋 About the maker
-
-Open Carrusel is built and maintained by **[tododeia](https://www.tododeia.com)** — a content + AI lab building tools for creators who want leverage without lock-in.
-
-Founder: **Enrique Rocha** ([@soyenriquerocha](https://www.instagram.com/soyenriquerocha)) — Tijuanense, content creator, builds AI tools so creators don't fall behind. Also behind [@tododeia](https://www.instagram.com/tododeia) and [@metara.ai](https://www.instagram.com/metara.ai).
-
-If Open Carrusel saves you time, the best support is:
-
-- ⭐ **Star this repo** to help others find it
-- 🐛 **Open an issue** when something breaks (or send a PR)
-- 📲 **Tag [@soyenriquerocha](https://www.instagram.com/soyenriquerocha) or [@tododeia](https://www.instagram.com/tododeia)** when you ship a carousel made with it — we love seeing it
-- 🌐 **Visit [tododeia.com](https://www.tododeia.com)** for more AI-for-creators content
-
----
-
-## 📄 License
-
-[MIT](./LICENSE) — do anything you want with it. Attribution appreciated, never required.
-
----
-
-<div align="center">
-
-**Built with ❤️ in Tijuana by [tododeia](https://www.tododeia.com).**
-
-*Hecho para creadores que construyen el futuro.*
-
-</div>
+Framewoven is released under the [MIT License](./LICENSE).
