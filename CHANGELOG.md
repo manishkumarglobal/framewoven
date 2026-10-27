@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.3] - 2026-10-27
+
+The first standalone Framewoven release.
+Framewoven is now an independently maintained product with its own repository, identity, documentation, and release process.
+This release contains no new functional features.
+Apart from the product name, the application, its storage format, its API, and its rendering and export pipeline are unchanged from 0.1.2, and existing local data in `data/` and `public/uploads/` is used as is.
+
 ### Changed
 
 - The product is now Framewoven, an independently maintained project with its own repository at https://github.com/manishkumarglobal/framewoven.
@@ -26,9 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `docs/PROVENANCE.md` records the original project, the maintained fork, the exact source baseline, the MIT license and its copyright notice, attribution, and where the fork's Issues, pull requests, and releases remain.
-
-No application behavior, storage format, API, or rendering and export logic changed.
-Existing local data in `data/` and `public/uploads/` is used as is.
 
 ## [0.1.2] - 2026-09-02
 
@@ -133,6 +139,7 @@ compatible fix or an additive change on top of the upstream 0.1.0 baseline.
   removes a `react-hooks/refs` violation that made the newly added lint gate
   unpassable and could have produced a stale transition direction.
 
-[Unreleased]: https://github.com/manishkumarglobal/framewoven/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/manishkumarglobal/framewoven/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/manishkumarglobal/framewoven/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/manishkumarglobal/open-carrusel/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/manishkumarglobal/open-carrusel/releases/tag/v0.1.1
