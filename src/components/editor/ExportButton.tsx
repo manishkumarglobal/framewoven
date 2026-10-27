@@ -67,7 +67,8 @@ export function ExportButton({
   const disabled = exporting !== null || slideCount === 0;
 
   // Close the menu on an outside click or Escape, and move focus into it when
-  // it opens so the keyboard can pick a format straight away.
+  // it opens so the keyboard can pick a format straight away. Focus returns to
+  // the trigger only if it was still in the menu, never from elsewhere.
   useEffect(() => {
     if (!menuOpen) return;
     menuRef.current
@@ -78,10 +79,10 @@ export function ExportButton({
       if (!rootRef.current?.contains(event.target as Node)) setMenuOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        triggerRef.current?.focus();
-      }
+      if (event.key !== "Escape") return;
+      const focusInMenu = menuRef.current?.contains(document.activeElement);
+      setMenuOpen(false);
+      if (focusInMenu) triggerRef.current?.focus();
     };
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -91,7 +92,13 @@ export function ExportButton({
     };
   }, [menuOpen]);
 
-  const moveFocus = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+  // Arrow keys move between items, which stay out of the tab order. Tab leaves
+  // the menu, so it closes rather than staying open behind the focus.
+  const onMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Tab") {
+      setMenuOpen(false);
+      return;
+    }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
     const items = Array.from(
@@ -196,7 +203,12 @@ export function ExportButton({
           ref={menuRef}
           role="menu"
           aria-label="Export format"
-          onKeyDown={moveFocus}
+          onKeyDown={onMenuKeyDown}
+          onBlur={(event) => {
+            if (!rootRef.current?.contains(event.relatedTarget as Node | null)) {
+              setMenuOpen(false);
+            }
+          }}
           className="oc-enter-pop absolute right-0 top-full mt-2 z-30 w-72 rounded-lg border border-border bg-surface p-1 shadow-lg"
         >
           {EXPORT_FORMATS.map((option) => {
@@ -205,6 +217,7 @@ export function ExportButton({
               <button
                 key={option.format}
                 role="menuitem"
+                tabIndex={-1}
                 onClick={() => handleExport(option)}
                 className={cn(
                   "w-full rounded-md px-3 py-2 text-left transition-colors",

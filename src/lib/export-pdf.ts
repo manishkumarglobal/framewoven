@@ -10,8 +10,11 @@ import { DIMENSIONS } from "@/types/carousel";
  */
 export const PDF_POINTS_PER_PIXEL = 72 / 96;
 
-/** LinkedIn's limits for document posts. */
-export const LINKEDIN_MAX_PDF_BYTES = 100 * 1024 * 1024;
+/**
+ * LinkedIn's limits for document posts. The size limit is taken as decimal
+ * megabytes, the stricter reading of "100 MB".
+ */
+export const LINKEDIN_MAX_PDF_BYTES = 100_000_000;
 export const LINKEDIN_MAX_PDF_PAGES = 300;
 
 /**
@@ -41,7 +44,16 @@ export function pdfPageSize(aspectRatio: AspectRatio): {
 }
 
 function formatMegabytes(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / 1_000_000).toFixed(1)} MB`;
+}
+
+/**
+ * pdf-lib decodes and compresses images synchronously. Handing the event loop
+ * back between slides keeps a large export from stalling the rest of the
+ * server, such as a chat response that is streaming at the same time.
+ */
+function yieldToEventLoop(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
 }
 
 /**
@@ -90,6 +102,10 @@ export async function buildSlidesPdf(
     pdf
       .addPage([page.width, page.height])
       .drawImage(image, { x: 0, y: 0, width: page.width, height: page.height });
+    // Compress this slide now rather than all of them at once inside save(),
+    // which also releases its decoded pixels before the next slide.
+    await image.embed();
+    await yieldToEventLoop();
   }
 
   // A classic cross-reference table instead of compressed object streams, for

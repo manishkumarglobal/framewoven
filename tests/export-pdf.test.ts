@@ -18,6 +18,7 @@ import { DIMENSIONS, MAX_SLIDES } from "@/types/carousel";
 import type { AspectRatio } from "@/types/carousel";
 import {
   detailedSlidePng,
+  imageTransform,
   readPdfPages,
   rgbPixels,
   syntheticSlidePng,
@@ -140,14 +141,21 @@ describe("buildSlidesPdf", () => {
       );
 
       for (const page of pages) {
-        // One image, placed at the origin and scaled to exactly the page: no
-        // crop, no offset, no stretch to another ratio.
-        expect(page.operators).toMatch(
-          new RegExp(`\\b${width} 0 0 ${height} 0 0 cm\\b`)
-        );
-        expect(page.operators.match(/\bDo\b/g)).toHaveLength(1);
-        // Nothing but the image is painted: no text, paths or watermark.
-        expect(page.operators).not.toMatch(/\b(Tj|TJ|re|f|S|BT)\b/);
+        // The visible area is the whole page, upright.
+        expect(page.mediaBoxOrigin).toEqual({ x: 0, y: 0 });
+        expect(page.cropBox).toEqual({ x: 0, y: 0, width, height });
+        expect(page.rotation).toBe(0);
+        // The image is scaled to exactly the page and placed at its origin: no
+        // crop, no offset, no rotation, no stretch to another ratio.
+        expect(imageTransform(page.operators)).toEqual([width, 0, 0, height, 0, 0]);
+        // Nothing but the image is painted: no text, paths or watermark. Every
+        // operator is one of save, transform, paint image, restore.
+        const ops = page.operators
+          .split("\n")
+          .map((line) => line.trim().split(/\s+/).pop())
+          .filter(Boolean);
+        expect(new Set(ops)).toEqual(new Set(["q", "cm", "Do", "Q"]));
+        expect(ops.filter((op) => op === "Do")).toHaveLength(1);
         expect(page.images[0].width).toBe(DIMENSIONS[ratio].width);
         expect(page.images[0].height).toBe(DIMENSIONS[ratio].height);
       }
@@ -173,6 +181,22 @@ describe("buildSlidesPdf", () => {
         expect(image.pixels.equals(await rgbPixels(pngs[i]))).toBe(true);
       }
     }
+  });
+
+  it("lets other work run while it builds the PDF", async () => {
+    // pdf-lib decodes and compresses synchronously; without yielding between
+    // slides a timer could not fire until the whole PDF was finished.
+    const pngs = await Promise.all(
+      [1, 2, 3, 4].map((seed) => detailedSlidePng(1080, 1350, seed))
+    );
+    let ticks = 0;
+    const timer = setInterval(() => ticks++, 0);
+    try {
+      await buildSlidesPdf(pngs, "4:5");
+    } finally {
+      clearInterval(timer);
+    }
+    expect(ticks).toBeGreaterThanOrEqual(pngs.length - 1);
   });
 
   it("does not modify the PNG buffers it is given", async () => {
@@ -203,7 +227,7 @@ describe("buildSlidesPdf", () => {
 
   it("enforces the size limit with an actionable message", async () => {
     const pngs = [await detailedSlidePng(1080, 1350, 3)];
-    const attempt = buildSlidesPdf(pngs, "4:5", { maxBytes: 1024 * 1024 });
+    const attempt = buildSlidesPdf(pngs, "4:5", { maxBytes: 1_000_000 });
     await expect(attempt).rejects.toBeInstanceOf(PdfExportError);
     await expect(attempt).rejects.toMatchObject({ status: 422 });
     await expect(attempt).rejects.toThrow(
@@ -212,7 +236,7 @@ describe("buildSlidesPdf", () => {
   });
 
   it("uses LinkedIn's document limits by default", async () => {
-    expect(LINKEDIN_MAX_PDF_BYTES).toBe(100 * 1024 * 1024);
+    expect(LINKEDIN_MAX_PDF_BYTES).toBe(100_000_000);
     expect(LINKEDIN_MAX_PDF_PAGES).toBe(300);
     // Framewoven's own slide limit sits well inside LinkedIn's page limit.
     expect(MAX_SLIDES).toBeLessThanOrEqual(LINKEDIN_MAX_PDF_PAGES);

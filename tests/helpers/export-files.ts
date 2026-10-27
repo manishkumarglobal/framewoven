@@ -59,6 +59,10 @@ export interface PdfPageContents {
   /** MediaBox width and height, in points. */
   width: number;
   height: number;
+  /** MediaBox lower-left corner, CropBox and /Rotate, which also decide what a reader shows. */
+  mediaBoxOrigin: { x: number; y: number };
+  cropBox: { x: number; y: number; width: number; height: number };
+  rotation: number;
   /** The decoded page content stream, e.g. `q 810 0 0 1012.5 0 0 cm /Image-1 Do Q`. */
   operators: string;
   images: {
@@ -80,7 +84,7 @@ export async function readPdfPages(bytes: Uint8Array): Promise<PdfPageContents[]
   const doc = await PDFDocument.load(bytes);
 
   return doc.getPages().map((page) => {
-    const { width, height } = page.getMediaBox();
+    const { x, y, width, height } = page.getMediaBox();
 
     const contents = page.node.Contents();
     const streams =
@@ -113,8 +117,42 @@ export async function readPdfPages(bytes: Uint8Array): Promise<PdfPageContents[]
       };
     });
 
-    return { width, height, operators, images };
+    return {
+      width,
+      height,
+      mediaBoxOrigin: { x, y },
+      cropBox: page.getCropBox(),
+      rotation: page.getRotation().angle,
+      operators,
+      images,
+    };
   });
+}
+
+/**
+ * The transformation in effect when the page's image is painted: every `cm`
+ * before `Do`, multiplied in order, as [a b c d e f]. An image drawn edge to
+ * edge on a W x H page gives [W 0 0 H 0 0]: scaled to the page, not offset,
+ * rotated or skewed.
+ */
+export function imageTransform(operators: string): number[] {
+  let ctm = [1, 0, 0, 1, 0, 0];
+  const lines = operators.split("\n").map((l) => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    if (line.endsWith(" Do")) return ctm;
+    if (!line.endsWith(" cm")) continue;
+    const [a, b, c, d, e, f] = line.split(/\s+/).slice(0, 6).map(Number);
+    const [A, B, C, D, E, F] = ctm;
+    ctm = [
+      a * A + b * C,
+      a * B + b * D,
+      c * A + d * C,
+      c * B + d * D,
+      e * A + f * C + E,
+      e * B + f * D + F,
+    ];
+  }
+  throw new Error("The page paints no image");
 }
 
 /**
