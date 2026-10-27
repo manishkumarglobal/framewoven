@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The product is now Framewoven, an independently maintained project with its own repository at https://github.com/manishkumarglobal/framewoven.
-  The page title, dashboard heading, editor header, setup and diagnostic messages, Claude Code slash commands, and the design agent's prompt use the new name.
+  The page title, dashboard heading, editor header, chat assistant label, setup messages, Claude Code slash commands, and the design agent's prompt use the new name.
+  The design agent's Claude Code sessions are now named `framewoven-chat` instead of `carrusel-chat`.
   Package metadata and every repository link point to the new repository.
 - `/start` now recognizes an already-running instance by the Framewoven name, and the background dev server logs to `framewoven-dev.log` in the system temp directory instead of `open-carrusel-dev.log`.
 - The README is rewritten around what the app does today, with tested install steps, a clear split between application source and your data, and a separate list of planned capabilities.

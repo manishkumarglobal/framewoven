@@ -33,7 +33,7 @@ export function ChatMessage({ role, content, isStreaming }: ChatMessageProps) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium text-muted-foreground mb-1">
-          {role === "user" ? "You" : "Carrusel AI"}
+          {role === "user" ? "You" : "Framewoven AI"}
         </div>
         <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
           {content}

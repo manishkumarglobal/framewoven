@@ -26,7 +26,7 @@ Trivial administrative edits, such as a typo or a one-line ignore rule, do not n
 ## Branches
 
 Work happens on a short-lived branch cut from `main`, named `<type>/<short-description>`.
-The types follow the commit prefixes already used in the history: `feat`, `fix`, `docs`, `test`, `chore`.
+The types match the conventional commit prefixes: `feat`, `fix`, `docs`, `test`, `chore`.
 For example: `fix/export-timeout`, `docs/install-steps`, `chore/release-v0.1.4`.
 
 `main` is protected.
@@ -94,4 +94,5 @@ Record anything adopted this way in the changelog and, where it affects origin o
 ## Roadmap
 
 Framewoven owns its roadmap.
-Planned capabilities are listed in the README and tracked as Issues, and they are described as shipped only after they are released.
+Planned capabilities are listed in the README and get a tracked Issue when work on them is scheduled.
+They are described as shipped only after they are released.

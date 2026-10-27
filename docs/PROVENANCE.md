@@ -41,10 +41,17 @@ The original Open Carrusel implementation was created in the [Hainrixz/open-carr
 At the source baseline, the original project's README credits [tododeia](https://www.tododeia.com) as its maker and Enrique Rocha ([@soyenriquerocha](https://www.instagram.com/soyenriquerocha)) as tododeia's founder.
 The original commits are authored in Git as Enrique Henry.
 
-The original project's README also credits the people and projects whose work shaped it, including Emil Kowalski's animation philosophy, which the `oc-*` CSS motion utilities in `src/app/globals.css` encode.
+The original project's README also acknowledges the people and projects whose work shaped it:
 
+- [Emil Kowalski](https://emilkowal.ski), whose animation philosophy the `oc-*` CSS motion utilities in `src/app/globals.css` encode.
+- [Anthropic](https://www.anthropic.com), for Claude and Claude Code, which power the design agent.
+- [Vercel](https://vercel.com), for Next.js and Turbopack.
+- [Radix UI](https://www.radix-ui.com) and [shadcn/ui](https://ui.shadcn.com), for the patterns underneath the dialog, button, and input primitives.
+- [dnd-kit](https://dndkit.com), for drag and drop.
+- [Puppeteer](https://pptr.dev) and [Sharp](https://sharp.pixelplumbing.com), for the export pipeline.
+
+The UI primitives in `src/components/ui/` and the `cn()` helper in `src/lib/utils.ts` follow the shadcn/ui component patterns, which shadcn/ui publishes under the MIT License for copying into projects.
 Third-party dependencies are installed from npm and are distributed under their own licenses, as recorded in `package-lock.json`.
-No third-party source code is vendored into this repository.
 
 ## Who wrote what
 
@@ -68,8 +75,9 @@ The maintained fork's Issues, pull requests, and releases remain on the fork and
 - Release `v0.1.1`: https://github.com/manishkumarglobal/open-carrusel/releases/tag/v0.1.1
 - Release `v0.1.2`: https://github.com/manishkumarglobal/open-carrusel/releases/tag/v0.1.2
 
-Commit subjects such as `(#7)` through `(#16)` refer to pull requests in the maintained fork, not to Issues or pull requests in this repository.
-GitHub may still render them as links to this repository's numbering, so follow the fork links above instead.
+Every `(#N)` in a commit subject at or before `0fda76c`, that is `(#1)` and `(#7)` through `(#16)`, refers to a pull request in the maintained fork, not to an Issue or pull request in this repository.
+In particular, `(#1)` in `7d8bbdd` is the fork's pull request #1, not Framewoven's Issue #1.
+GitHub may still render these as links to this repository's numbering, so follow the fork links above instead.
 
 ## Changes outside the baseline
 

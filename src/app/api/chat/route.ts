@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     "--max-budget-usd",
     "1.00",
     "--name",
-    "carrusel-chat",
+    "framewoven-chat",
   ];
 
   if (sessionId) {

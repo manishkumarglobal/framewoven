@@ -24,8 +24,9 @@ Framewoven is a local-first, AI-assisted tool for creating branded carousel cont
 You describe what you want in a chat panel, and a Claude design agent writes each slide as HTML and CSS using your brand's colors, fonts, and style.
 Slides render live in the editor and export as PNGs at Instagram's exact pixel dimensions.
 
-Everything runs on your own machine.
-Your carousels, brand settings, and uploads are plain files in the project folder, with no accounts and no cloud storage.
+The app runs on your own machine.
+Your carousels, brand settings, and uploads are plain files in the project folder, with no app accounts and no cloud storage.
+The design agent is Claude, so each chat request sends your message, brand settings, and the open carousel's slides to Anthropic through your Claude Code account.
 
 ## Table of contents
 
@@ -127,7 +128,7 @@ npm run setup
 
 `npm run setup` installs dependencies, downloads Chromium, seeds empty data files, looks for the Claude CLI, and then starts the dev server at http://localhost:3000 in the foreground.
 Press Ctrl+C to stop it, and run `npm run dev` to start it again later.
-To use another port, run `PORT=3001 npm run dev`.
+To use another port, run `PORT=3001 npm run dev` on macOS or Linux, or `$env:PORT=3001; npm run dev` in Windows PowerShell.
 
 If setup cannot find the Claude CLI, it prints a warning and the app runs without the design agent.
 Set `CLAUDE_CLI_PATH` in `.env.local` to the full path of your `claude` executable, then restart the dev server.
@@ -142,16 +143,20 @@ Git tracks only the source; everything you create stays local and is ignored by 
 | `data/brand.json` | Brand configuration |
 | `data/carousels.json` | Carousels and their slides, including undo history and captions |
 | `data/templates.json` | Saved templates |
+| `data/style-presets.json` | Style presets the design agent can save |
+| `data/staged-actions.json` | Records for an internal API that the UI does not use yet |
 | `data/.font-cache/` | Cached Google Fonts CSS used by export |
 | `public/uploads/` | Uploaded logos and reference images |
 | `.env.local` | Local configuration, such as `CLAUDE_CLI_PATH` |
 
 Chat transcripts are stored in your browser's local storage for each carousel.
+Claude Code also keeps its own record of each design-agent session in its data directory, outside this project.
 Exports are not stored; each export is built in memory and downloaded as a ZIP.
 
 Updating Framewoven with `git pull` does not touch these files.
 To back up your work, copy `data/`, `public/uploads/`, and `.env.local`.
-`/reset` deletes your carousels, templates, brand, and uploads and re-seeds empty defaults, after asking for confirmation.
+`/reset` deletes your carousels, templates, brand, style presets, and uploads and re-seeds empty defaults, after asking for confirmation.
+It does not touch browser local storage or Claude Code's session records.
 
 ## How the design agent works
 
@@ -191,7 +196,7 @@ From a terminal:
 | `npm run dev` | Start the dev server. |
 | `npm run build` / `npm start` | Build and run a production server. |
 | `npm run doctor` | Run the environment check; works before `npm install`. |
-| `npm run typecheck`, `npm run lint`, `npm test` | The quality gate used in CI. |
+| `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` | The quality gate CI runs on every pull request. |
 
 ## Architecture
 
@@ -224,7 +229,7 @@ flowchart LR
   ZIP --> U
 ```
 
-- **Local-first and single-user.** A localhost web app reading and writing local files, with no database, accounts, or cloud services.
+- **Local-first and single-user.** A localhost web app reading and writing local files, with no database and no app accounts. Its outside dependencies are Claude Code for the design agent and Google Fonts for typefaces.
 - **Claude CLI as the agent.** The agent reuses your Claude Code sign-in instead of requiring a separate API key.
 - **Slides as HTML.** HTML and CSS are more expressive than a canvas or a layout DSL, and the same markup drives preview and export.
 - **Sandboxed preview.** Preview iframes use `sandbox=""`, so slide markup cannot run scripts in the editor.
@@ -252,7 +257,7 @@ framewoven/
 
 ## Troubleshooting
 
-**Setup says Node is too old.**
+**`/start` or `npm run doctor` says Node is too old.**
 Install Node 20 or later from [nodejs.org](https://nodejs.org) or with [nvm](https://github.com/nvm-sh/nvm).
 
 **The chat panel says to connect the Claude CLI.**
@@ -262,7 +267,7 @@ If yours is elsewhere, set `CLAUDE_CLI_PATH` in `.env.local` and restart the dev
 On Windows, `where claude` in PowerShell shows the path.
 
 **Port 3000 is in use.**
-Run `/stop` if it is a previous Framewoven server, or use another port with `/start 3001` or `PORT=3001 npm run dev`.
+Run `/stop` if it is a previous Framewoven server, or use another port with `/start 3001` or the `PORT` setting shown in [Install and run](#install-and-run).
 
 **Export fails.**
 The editor shows the reason.
