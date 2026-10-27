@@ -2,16 +2,28 @@ import { NextResponse } from "next/server";
 import archiver from "archiver";
 import { getCarousel } from "@/lib/carousels";
 import { exportAllSlides, describeExportFailure } from "@/lib/export-slides";
+import { buildSlidesPdf, PdfExportError } from "@/lib/export-pdf";
+import { parseExportFormat } from "@/lib/export-formats";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // No `format` means the original PNG ZIP, so existing callers are unaffected.
+  const format = parseExportFormat(new URL(request.url).searchParams.get("format"));
+  if (!format) {
+    return NextResponse.json(
+      { error: 'Unknown export format. Use "png" for a ZIP of PNGs or "pdf" for a PDF.' },
+      { status: 400 }
+    );
+  }
+
   const carousel = await getCarousel(id);
 
   if (!carousel) {
@@ -28,6 +40,22 @@ export async function POST(
       carousel.slides,
       carousel.aspectRatio
     );
+
+    if (format === "pdf") {
+      // The PDF pages are the PNGs rendered above, so both formats show the
+      // same pixels.
+      const pdfBytes = await buildSlidesPdf(
+        pngBuffers.map(({ buffer }) => buffer),
+        carousel.aspectRatio,
+        { title: carousel.name }
+      );
+      return new Response(new Uint8Array(pdfBytes), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="carousel-${carousel.name.replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf"`,
+        },
+      });
+    }
 
     // Build ZIP archive and collect all data
     const zipBuffer = await new Promise<Buffer>((resolve, reject) => {
@@ -64,6 +92,9 @@ export async function POST(
       },
     });
   } catch (error) {
+    if (error instanceof PdfExportError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     // Full detail stays server-side; the client gets a safe, actionable summary.
     console.error("[export] failed", error);
     return NextResponse.json(

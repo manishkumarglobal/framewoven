@@ -11,7 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- LinkedIn PDF export.
+  The editor's Export button is now a menu with two choices: **Instagram · PNG ZIP**, the existing download of one PNG per slide, and **LinkedIn · PDF**, one multi-page PDF for a LinkedIn document post.
+  The PDF is built from the same rendered PNGs, one slide per page in carousel order, embedded losslessly, so it shows exactly what the PNG export shows.
+  Every page has the carousel's own aspect ratio: 4:5, the recommended LinkedIn format, gives 4:5 portrait pages; 1:1 gives square pages; and 9:16 exports as-is, with a note in the menu that 4:5 generally displays better in LinkedIn's feed.
+  A PDF above LinkedIn's 100 MB limit is refused with a message saying what to change.
+- `POST /api/carousels/[id]/export?format=pdf` returns that PDF.
+  A request without `format`, or with `format=png`, still returns the ZIP of PNGs, and an unknown format is rejected with status 400.
 
 ## [0.1.3] - 2026-10-27
 

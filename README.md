@@ -77,8 +77,14 @@ The agent can also read this app's local data through its API, and it may fetch 
 - **Full-window preview** that steps through slides with the arrow keys.
 - **Captions and hashtags.**
   Ask the design agent for a caption, and it saves the caption and hashtags to the carousel, where the editor shows them with copy buttons.
-- **PNG export.**
-  The Export button renders every slide in headless Chromium at the carousel's exact dimensions and downloads them as a ZIP.
+- **Export for Instagram or LinkedIn.**
+  The Export menu renders every slide in headless Chromium at the carousel's exact dimensions and offers two downloads:
+  - **Instagram · PNG ZIP**: one PNG per slide, in a ZIP.
+  - **LinkedIn · PDF**: one PDF for a LinkedIn document post, with one page per slide in carousel order.
+    Each page is the slide's PNG, embedded losslessly on a page with the carousel's own aspect ratio, so the PDF shows exactly the same pixels as the PNGs.
+    4:5 portrait is the recommended LinkedIn format; 1:1 exports as square pages, and 9:16 exports as-is with a note that 4:5 generally displays better in LinkedIn's feed.
+    A PDF larger than LinkedIn's 100 MB limit is refused with a message saying what to change.
+
   If an export fails, the editor tells you what went wrong.
 
 ## Requirements
@@ -152,7 +158,7 @@ Git tracks only the source; everything you create stays local and is ignored by 
 
 Chat transcripts are stored in your browser's local storage for each carousel.
 Claude Code also keeps its own record of each design-agent session in its data directory, outside this project.
-Exports are not stored; each export is built in memory and downloaded as a ZIP.
+Exports are not stored; each export is built in memory and downloaded as a ZIP of PNGs or a PDF.
 
 Updating Framewoven with `git pull` does not touch these files.
 To back up your work, copy `data/`, `public/uploads/`, and `.env.local`.
@@ -178,6 +184,11 @@ The agent then works through the app's own API:
 Slides are stored as body-level HTML, without `<html>`, `<head>`, or `<!DOCTYPE>`.
 `wrapSlideHtml()` in [`src/lib/slide-html.ts`](./src/lib/slide-html.ts) wraps that body into a full document with font loading and fixed dimensions.
 The same function feeds both the sandboxed preview iframe and the Puppeteer export, which screenshots each slide at its exact pixel size.
+
+`POST /api/carousels/[id]/export` packages those screenshots in one of two ways.
+Without a `format`, or with `?format=png`, it answers with a ZIP of PNGs, as it always has.
+With `?format=pdf`, [`src/lib/export-pdf.ts`](./src/lib/export-pdf.ts) embeds the same PNGs into a PDF, one page per slide.
+Pages are sized at 0.75 pt per pixel (72 pt per inch over 96 CSS pixels per inch), so a 1080×1350 slide becomes an 810×1012.5 pt page, keeping its exact aspect ratio.
 
 ## Slash commands and scripts
 
@@ -214,7 +225,7 @@ flowchart LR
   DATA[("data/*.json<br/>locked, atomic writes")]
   EXP["/api/.../export/"]
   PUP["Puppeteer<br/>(headless Chromium)"]
-  ZIP{{"ZIP of PNGs"}}
+  ZIP{{"ZIP of PNGs<br/>or PDF"}}
 
   U --> C & P & F
   C -- "POST chat" --> API
@@ -292,7 +303,6 @@ These are planned directions, not shipped features.
 Each will be tracked as an Issue and listed in the [changelog](./CHANGELOG.md) only when released.
 
 - **Multiple independent brand profiles**, so one installation can serve several brands.
-- **LinkedIn-ready PDF exports** for document-style carousel posts.
 - **Improved content workflows** for planning and iterating on a series of posts.
 - **Reusable branded templates** that carry a brand's layout system, beyond today's saved-carousel templates.
 - **Additional platform support** beyond Instagram's formats.
