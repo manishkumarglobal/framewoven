@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Open Carrusel — AI Carousel Builder",
+  title: "Framewoven - AI Creative Studio",
   description:
-    "Open-source AI-powered Instagram carousel builder. Create beautiful carousels with natural language.",
+    "A local-first, AI-assisted creative studio for branded social content. Design Instagram carousels by chatting with Claude.",
 };
 
 export default function RootLayout({

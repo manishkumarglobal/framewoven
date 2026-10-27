@@ -46,7 +46,7 @@ next-env.d.ts
 
 # audit / tooling artifacts
 .playwright-cli/
-open-carrusel*.log
+framewoven*.log
 /.next/cache/
 
 # OS

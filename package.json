@@ -1,7 +1,7 @@
 {
-  "name": "open-carrusel",
+  "name": "framewoven",
   "version": "0.1.2",
-  "description": "AI-powered Instagram carousel builder. Chat with Claude to design slides; export as PNGs at exact Instagram dimensions.",
+  "description": "An AI-powered creative studio for branded social content. Chat with Claude to design Instagram carousels; export PNGs at exact Instagram dimensions.",
   "license": "MIT",
   "private": true,
   "engines": {
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Hainrixz/open-carrusel"
+    "url": "https://github.com/manishkumarglobal/framewoven"
   },
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -52,5 +52,9 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.11"
+  },
+  "homepage": "https://github.com/manishkumarglobal/framewoven",
+  "bugs": {
+    "url": "https://github.com/manishkumarglobal/framewoven/issues"
   }
 }

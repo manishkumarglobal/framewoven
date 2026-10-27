@@ -1,17 +1,34 @@
 # Changelog
 
-All notable changes specific to this maintained fork of Open Carrusel are documented here.
+All notable changes to Framewoven are documented here.
 
-This changelog begins where the fork starts introducing its own changes.
-It does not restate the upstream history of
-[Hainrixz/open-carrusel](https://github.com/Hainrixz/open-carrusel).
+Framewoven is derived from [Open Carrusel](https://github.com/Hainrixz/open-carrusel) through a maintained fork, [manishkumarglobal/open-carrusel](https://github.com/manishkumarglobal/open-carrusel).
+Versions 0.1.1 and 0.1.2 below were released from that fork, and their links point to it.
+This changelog does not restate the original project's history; see [`docs/PROVENANCE.md`](./docs/PROVENANCE.md).
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- The product is now Framewoven, an independently maintained project with its own repository at https://github.com/manishkumarglobal/framewoven.
+  The page title, dashboard heading, editor header, chat assistant label, setup messages, Claude Code slash commands, and the design agent's prompt use the new name.
+  The design agent's Claude Code sessions are now named `framewoven-chat` instead of `carrusel-chat`.
+  Package metadata and every repository link point to the new repository.
+- `/start` now recognizes an already-running instance by the Framewoven name, and the background dev server logs to `/tmp/framewoven-dev.log` (`framewoven-dev.log` in the temp directory on Windows) instead of `open-carrusel-dev.log`.
+- The README is rewritten around what the app does today, with tested install steps, a clear split between application source and your data, and a separate list of planned capabilities.
+  Statements that overstated the previous behavior are corrected: chat replies arrive one message at a time, exports are downloaded rather than stored, and slide content cannot be created without the Claude CLI.
+- The maintainer guide is now `docs/MAINTAINING.md` and describes independent maintenance.
+  Framewoven no longer keeps an `upstream` remote or synchronizes with the original project; outside changes are adopted only through a reviewed Issue and pull request.
+
+### Added
+
+- `docs/PROVENANCE.md` records the original project, the maintained fork, the exact source baseline, the MIT license and its copyright notice, attribution, and where the fork's Issues, pull requests, and releases remain.
+
+No application behavior, storage format, API, or rendering and export logic changed.
+Existing local data in `data/` and `public/uploads/` is used as is.
 
 ## [0.1.2] - 2026-09-02
 
@@ -116,6 +133,6 @@ compatible fix or an additive change on top of the upstream 0.1.0 baseline.
   removes a `react-hooks/refs` violation that made the newly added lint gate
   unpassable and could have produced a stale transition direction.
 
-[Unreleased]: https://github.com/manishkumarglobal/open-carrusel/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/manishkumarglobal/framewoven/compare/v0.1.2...HEAD
 [0.1.2]: https://github.com/manishkumarglobal/open-carrusel/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/manishkumarglobal/open-carrusel/releases/tag/v0.1.1

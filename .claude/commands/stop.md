@@ -1,5 +1,5 @@
 ---
-description: Stop the local Open Carrusel dev server (defaults to :3000, accepts a port arg).
+description: Stop the local Framewoven dev server (defaults to :3000, accepts a port arg).
 argument-hint: [port]
 allowed-tools: Bash(lsof *), Bash(kill *), Bash(echo *)
 ---

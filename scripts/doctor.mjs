@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Open Carrusel — environment diagnostic.
+// Framewoven - environment diagnostic.
 // Pure Node, no dependencies, safe to run pre-`npm install`.
 // Exit 0 if everything required is OK; exit 1 on any required failure.
 

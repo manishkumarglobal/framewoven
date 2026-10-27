@@ -1,6 +1,8 @@
-# Open Carrusel
+# Framewoven
 
-AI-powered Instagram carousel builder. Next.js 16 + React 19 + TypeScript + Tailwind v4.
+AI-powered creative studio for branded social content: design Instagram carousels by chatting with Claude. Next.js 16 + React 19 + TypeScript + Tailwind v4.
+
+Derived from the MIT-licensed Open Carrusel project and now independently maintained. `LICENSE` and its copyright notice must stay unchanged; see `docs/PROVENANCE.md` for origin and attribution and `docs/MAINTAINING.md` for process.
 
 ## Architecture
 
