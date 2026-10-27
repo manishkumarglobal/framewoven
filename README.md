@@ -26,7 +26,8 @@ Slides render live in the editor and export as PNGs at Instagram's exact pixel d
 
 The app runs on your own machine.
 Your carousels, brand settings, and uploads are plain files in the project folder, with no app accounts and no cloud storage.
-The design agent is Claude, so each chat request sends your message, brand settings, and the open carousel's slides to Anthropic through your Claude Code account.
+The design agent is Claude, so each chat request sends your message, brand settings, the open carousel's details, and any reference images the agent opens to Anthropic through your Claude Code account.
+The agent can also read this app's local data through its API, and it may fetch web pages while it researches a topic.
 
 ## Table of contents
 
@@ -82,7 +83,7 @@ The design agent is Claude, so each chat request sends your message, brand setti
 
 ## Requirements
 
-- **Node.js 20 or later**, with npm.
+- **Node.js 20.9 or later**, with npm. Next.js 16 refuses to start on older versions.
 - **Git**, to clone the repository.
 - **Claude Code**, installed and signed in, for the design agent.
   Framewoven runs the `claude` command-line tool on your machine, so the agent uses your existing Claude Code account and its usage limits.
@@ -161,7 +162,8 @@ It does not touch browser local storage or Claude Code's session records.
 ## How the design agent works
 
 When you send a chat message, `/api/chat` starts the Claude CLI as a subprocess with `--allowedTools Bash WebFetch Read` and streams its replies back to the browser as Server-Sent Events.
-The agent's system prompt includes your brand configuration, the open carousel's slides, and the address of this running app.
+The agent's system prompt includes your brand configuration, the open carousel's slide list (IDs and notes), its reference images, and the address of this running app.
+The agent reads and writes slide content through the app's API.
 
 The agent then works through the app's own API:
 
@@ -185,7 +187,7 @@ Inside Claude Code:
 |---|---|
 | `/start [port]` | Set up if needed, launch the dev server in the background, and open the browser. Safe to re-run. |
 | `/stop [port]` | Stop the server listening on that port, 3000 by default. |
-| `/reset` | Delete local carousels, templates, brand, and uploads, then re-seed defaults. Asks first. |
+| `/reset` | Delete local carousels, templates, brand, style presets, and uploads, then re-seed defaults. Asks first. |
 | `/doctor` | Check Node, the Claude CLI, dependencies, data files, and port 3000. |
 
 From a terminal:
@@ -258,11 +260,12 @@ framewoven/
 ## Troubleshooting
 
 **`/start` or `npm run doctor` says Node is too old.**
-Install Node 20 or later from [nodejs.org](https://nodejs.org) or with [nvm](https://github.com/nvm-sh/nvm).
+Install Node 20.9 or later from [nodejs.org](https://nodejs.org) or with [nvm](https://github.com/nvm-sh/nvm).
 
 **The chat panel says to connect the Claude CLI.**
 Install Claude Code and sign in by running `claude` once.
-Setup looks for `claude` in `~/.local/bin`, `/usr/local/bin`, `/opt/homebrew/bin`, `~/.npm-global/bin`, and on your `PATH`; on Windows it also checks the npm and Programs folders.
+On macOS and Linux, Framewoven looks for `claude` in `~/.local/bin`, `/usr/local/bin`, `/opt/homebrew/bin`, `~/.npm-global/bin`, and on your `PATH`.
+On Windows it looks in `%APPDATA%\npm`, `%LOCALAPPDATA%\Programs\claude`, and on your `PATH`.
 If yours is elsewhere, set `CLAUDE_CLI_PATH` in `.env.local` and restart the dev server.
 On Windows, `where claude` in PowerShell shows the path.
 
@@ -271,7 +274,9 @@ Run `/stop` if it is a previous Framewoven server, or use another port with `/st
 
 **Export fails.**
 The editor shows the reason.
-If Chromium is missing or fails to launch, re-run `npm run setup`, which downloads Chromium and test-launches it.
+If Chromium is missing, re-run `npm run setup`, which downloads Chromium and test-launches it.
+If Chromium is installed but fails to launch, the download is usually incomplete and setup will not replace it on its own.
+Setup prints the cached Chromium folder to delete and the command to download it again: `npx puppeteer browsers install chrome`.
 On Linux you may need Chromium's system libraries, such as `libnss3`, `libatk1.0-0`, and `libxss1`.
 
 **Generated slides ignore my brand.**

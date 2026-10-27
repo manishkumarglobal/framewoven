@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The page title, dashboard heading, editor header, chat assistant label, setup messages, Claude Code slash commands, and the design agent's prompt use the new name.
   The design agent's Claude Code sessions are now named `framewoven-chat` instead of `carrusel-chat`.
   Package metadata and every repository link point to the new repository.
-- `/start` now recognizes an already-running instance by the Framewoven name, and the background dev server logs to `framewoven-dev.log` in the system temp directory instead of `open-carrusel-dev.log`.
+- `/start` now recognizes an already-running instance by the Framewoven name, and the background dev server logs to `/tmp/framewoven-dev.log` (`framewoven-dev.log` in the temp directory on Windows) instead of `open-carrusel-dev.log`.
 - The README is rewritten around what the app does today, with tested install steps, a clear split between application source and your data, and a separate list of planned capabilities.
   Statements that overstated the previous behavior are corrected: chat replies arrive one message at a time, exports are downloaded rather than stored, and slide content cannot be created without the Claude CLI.
 - The maintainer guide is now `docs/MAINTAINING.md` and describes independent maintenance.

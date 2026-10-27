@@ -75,13 +75,13 @@ The maintained fork's Issues, pull requests, and releases remain on the fork and
 - Release `v0.1.1`: https://github.com/manishkumarglobal/open-carrusel/releases/tag/v0.1.1
 - Release `v0.1.2`: https://github.com/manishkumarglobal/open-carrusel/releases/tag/v0.1.2
 
-Every `(#N)` in a commit subject at or before `0fda76c`, that is `(#1)` and `(#7)` through `(#16)`, refers to a pull request in the maintained fork, not to an Issue or pull request in this repository.
+Every `(#N)` in a commit subject at or before `0fda76c`, that is `(#1)`, `(#7)` through `(#11)`, and `(#14)` through `(#16)`, refers to a pull request in the maintained fork, not to an Issue or pull request in this repository.
 In particular, `(#1)` in `7d8bbdd` is the fork's pull request #1, not Framewoven's Issue #1.
 GitHub may still render these as links to this repository's numbering, so follow the fork links above instead.
 
 ## Changes outside the baseline
 
-The original repository's `main` branch continued after the baseline.
+The original repository's `main` branch continued after the fork point, `8ba717b`.
 For example, commit `27ea3cd` on 2026-10-25 adds copyright, notice, and credit material.
 Commits made upstream after `8ba717b` are not part of Framewoven and have not been imported.
 
