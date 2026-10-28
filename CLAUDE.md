@@ -33,7 +33,7 @@ design agent is told to call is derived per request by `resolveAppOrigin()` in
 - `PUT/DELETE /api/carousels/[id]/slides/[slideId]` — Update/delete slide
 - `PUT /api/carousels/[id]/slides` — Reorder slides (body: { slideIds: [...] })
 - `POST /api/carousels/[id]/slides/[slideId]/undo` — Undo slide change
-- `POST /api/carousels/[id]/export` — Export all slides to PNG ZIP
+- `POST /api/carousels/[id]/export` — Export all slides to PNG ZIP (default, or `?format=png`) or to one LinkedIn PDF (`?format=pdf`)
 - `GET/PUT /api/brand` — Brand configuration
 - `GET/POST /api/templates` — Templates
 - `POST /api/upload` — Upload (images PNG/JPG/WebP, fonts WOFF2/TTF; max 10MB, type checked by magic bytes)

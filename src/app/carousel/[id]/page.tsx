@@ -340,6 +340,7 @@ export default function CarouselEditorPage({ params }: PageProps) {
             <ExportButton
               carouselId={carousel.id}
               slideCount={carousel.slides.length}
+              aspectRatio={carousel.aspectRatio}
             />
           </div>
 
