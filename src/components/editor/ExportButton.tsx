@@ -12,13 +12,14 @@ import {
   Check,
   AlertTriangle,
   ChevronDown,
+  Hourglass,
   Info,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  EXPORT_FORMATS,
+  exportFormatsFor,
   filenameFromDisposition,
   linkedInAdvisory,
   type ExportFormat,
@@ -30,12 +31,21 @@ interface ExportButtonProps {
   carouselId: string;
   slideCount: number;
   aspectRatio: AspectRatio;
+  /**
+   * True while the design agent may still be adding or changing slides. Export
+   * is unavailable until it ends, so a download never captures a half-made
+   * carousel.
+   */
+  generating?: boolean;
 }
+
+const GENERATING_HINT =
+  "Export becomes available when the AI finishes generating slides.";
 
 /**
  * The name the browser saves the download under. The ZIP keeps the name it has
- * always had; the PDF takes the carousel-based name the server sends, because
- * LinkedIn offers the file name as the document's title.
+ * always had; the PDF and the single PNG take the carousel-based name the
+ * server sends, because LinkedIn offers the file name as the document's title.
  */
 function downloadName(
   option: ExportFormatOption,
@@ -54,6 +64,7 @@ export function ExportButton({
   carouselId,
   slideCount,
   aspectRatio,
+  generating = false,
 }: ExportButtonProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
@@ -64,7 +75,10 @@ export function ExportButton({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const advisory = linkedInAdvisory(aspectRatio);
-  const disabled = exporting !== null || slideCount === 0;
+  const disabled = exporting !== null || slideCount === 0 || generating;
+
+  // Generation starting closes the menu instead of leaving its choices open.
+  if (generating && menuOpen) setMenuOpen(false);
 
   // Close the menu on an outside click or Escape, and move focus into it when
   // it opens so the keyboard can pick a format straight away. Focus returns to
@@ -156,7 +170,12 @@ export function ExportButton({
   };
 
   return (
-    <div ref={rootRef} className="relative">
+    // The hint sits on the wrapper because a disabled button shows no tooltip.
+    <div
+      ref={rootRef}
+      className="relative"
+      title={generating ? GENERATING_HINT : undefined}
+    >
       <Button
         ref={triggerRef}
         onClick={() => {
@@ -170,9 +189,18 @@ export function ExportButton({
         size="sm"
         aria-haspopup="menu"
         aria-expanded={menuOpen}
+        aria-label={generating ? `Export unavailable. ${GENERATING_HINT}` : undefined}
       >
         <span
-          key={exporting ? "exporting" : done ? "done" : "idle"}
+          key={
+            exporting
+              ? "exporting"
+              : generating
+                ? "generating"
+                : done
+                  ? "done"
+                  : "idle"
+          }
           className="oc-enter-pop inline-flex items-center gap-2"
         >
           {exporting ? (
@@ -182,6 +210,11 @@ export function ExportButton({
                 Exporting {exporting === "pdf" ? "PDF · " : ""}
                 {slideCount} slide{slideCount === 1 ? "" : "s"}…
               </span>
+            </>
+          ) : generating ? (
+            <>
+              <Hourglass className="h-4 w-4" />
+              <span>Waiting for slides…</span>
             </>
           ) : done ? (
             <>
@@ -211,7 +244,7 @@ export function ExportButton({
           }}
           className="oc-enter-pop absolute right-0 top-full mt-2 z-30 w-72 rounded-lg border border-border bg-surface p-1 shadow-lg"
         >
-          {EXPORT_FORMATS.map((option) => {
+          {exportFormatsFor(slideCount).map((option) => {
             const note = option.format === "pdf" ? advisory : null;
             return (
               <button

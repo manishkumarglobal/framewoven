@@ -8,6 +8,7 @@ import { getCarousel } from "@/lib/carousels";
 import { getPreset } from "@/lib/style-presets";
 import { dataErrorResponse } from "@/lib/api-errors";
 import { resolveAppOrigin } from "@/lib/request-origin";
+import { beginGeneration } from "@/lib/generation-status";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -144,6 +145,13 @@ export async function POST(request: NextRequest) {
         return;
       }
 
+      // The subprocess is what writes this carousel's slides, so export stays
+      // unavailable until it has exited, however that happens.
+      const endGeneration =
+        typeof carouselId === "string" && carouselId
+          ? beginGeneration(carouselId)
+          : () => {};
+
       let buffer = "";
       let resolvedSessionId = sessionId ?? "";
 
@@ -180,6 +188,16 @@ export async function POST(request: NextRequest) {
 
       childProcess.on("error", (err) => {
         clearTimeout(timeout);
+        // A cancelled chat reports an AbortError as soon as the kill is sent,
+        // while the subprocess may still be finishing a write. Release here
+        // only if it never started or has already gone; otherwise "exit" will.
+        if (
+          childProcess.pid === undefined ||
+          childProcess.exitCode !== null ||
+          childProcess.signalCode !== null
+        ) {
+          endGeneration();
+        }
         const e = err as NodeJS.ErrnoException;
         console.error("[chat] Claude subprocess error", {
           claudePath,
@@ -211,6 +229,7 @@ export async function POST(request: NextRequest) {
 
       childProcess.on("exit", (code) => {
         clearTimeout(timeout);
+        endGeneration();
         // process remaining buffer
         if (buffer.trim()) {
           try {

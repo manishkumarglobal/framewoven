@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A PDF above LinkedIn's 100 MB limit is refused with a message saying what to change.
 - `POST /api/carousels/[id]/export?format=pdf` returns that PDF.
   A request without `format`, or with `format=png`, still returns the ZIP of PNGs, and an unknown format is rejected with status 400.
+- Direct PNG download for single-slide carousels (#21).
+  When a carousel has exactly one slide, such as a reel cover, the Export menu also offers **Instagram · PNG**, which downloads that slide as an ordinary `.png` file with no ZIP to extract.
+  It is the same image, byte for byte, that the PNG ZIP contains, in every aspect ratio.
+  `POST /api/carousels/[id]/export?format=single-png` returns it, and refuses a carousel with more than one slide with status 400.
+
+### Fixed
+
+- Export is no longer offered while the design agent is still creating or changing slides (#20).
+  Exporting during that window could download a half-finished carousel.
+  The Export button now reads **Waiting for slides…** until the agent's run has ended, whether it finished, failed or was stopped, and this holds after a page reload or in a second tab.
+  The export API refuses such a carousel with status 409 and a message saying why, and `GET /api/carousels/[id]/generation` reports whether a run is still in progress.
+  Carousels that are not being generated export exactly as before.
 
 ## [0.1.3] - 2026-10-27
 

@@ -3,11 +3,12 @@ import type { AspectRatio } from "@/types/carousel";
 /**
  * Export formats offered by `POST /api/carousels/[id]/export`.
  *
- * Both formats package the same rendered PNGs: `png` zips them, `pdf` places
- * each one on its own page. This module has no server dependencies so the
+ * Every format packages the same rendered PNGs: `png` zips them, `pdf` places
+ * each one on its own page, and `single-png` answers with the one PNG of a
+ * one-slide carousel as it is. This module has no server dependencies so the
  * editor can import it too.
  */
-export type ExportFormat = "png" | "pdf";
+export type ExportFormat = "png" | "pdf" | "single-png";
 
 /** What a request without `?format=` gets. Kept as the original ZIP export. */
 export const DEFAULT_EXPORT_FORMAT: ExportFormat = "png";
@@ -17,7 +18,7 @@ export interface ExportFormatOption {
   platform: string;
   label: string;
   description: string;
-  extension: "zip" | "pdf";
+  extension: "zip" | "pdf" | "png";
 }
 
 export const EXPORT_FORMATS: readonly ExportFormatOption[] = [
@@ -37,6 +38,25 @@ export const EXPORT_FORMATS: readonly ExportFormatOption[] = [
   },
 ];
 
+/** Offered only for a carousel with exactly one slide, such as a reel cover. */
+export const SINGLE_PNG_FORMAT: ExportFormatOption = {
+  format: "single-png",
+  platform: "Instagram",
+  label: "PNG",
+  description: "Download this slide as one PNG image, no ZIP.",
+  extension: "png",
+};
+
+/**
+ * The formats the Export menu offers for a carousel with this many slides: the
+ * usual two, followed by the single PNG when there is only one slide.
+ */
+export function exportFormatsFor(slideCount: number): ExportFormatOption[] {
+  return slideCount === 1
+    ? [...EXPORT_FORMATS, SINGLE_PNG_FORMAT]
+    : [...EXPORT_FORMATS];
+}
+
 /**
  * Reads the `format` query parameter. A missing or empty value is the default
  * ZIP export, so callers written before PDF existed keep their behaviour.
@@ -44,7 +64,9 @@ export const EXPORT_FORMATS: readonly ExportFormatOption[] = [
  */
 export function parseExportFormat(value: string | null): ExportFormat | null {
   if (value === null || value === "") return DEFAULT_EXPORT_FORMAT;
-  return EXPORT_FORMATS.some((option) => option.format === value)
+  return [...EXPORT_FORMATS, SINGLE_PNG_FORMAT].some(
+    (option) => option.format === value
+  )
     ? (value as ExportFormat)
     : null;
 }

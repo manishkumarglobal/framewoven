@@ -21,6 +21,7 @@ vi.mock("@/lib/export-slides", async (importOriginal) => ({
 const { getCarousel } = await import("@/lib/carousels");
 const { exportAllSlides } = await import("@/lib/export-slides");
 const { POST } = await import("@/app/api/carousels/[id]/export/route");
+const { beginGeneration } = await import("@/lib/generation-status");
 
 const getCarouselMock = vi.mocked(getCarousel);
 const exportAllSlidesMock = vi.mocked(exportAllSlides);
@@ -196,6 +197,122 @@ describe("LinkedIn PDF export", () => {
   );
 });
 
+describe("single PNG download", () => {
+  for (const ratio of ["1:1", "4:5", "9:16"] as AspectRatio[]) {
+    it(`answers a one-slide ${ratio} carousel with the PNG the ZIP holds, byte for byte`, async () => {
+      const rendered = await renderedPngs(ratio, 1);
+      getCarouselMock.mockResolvedValue(carousel(ratio, 1));
+      exportAllSlidesMock.mockResolvedValue(rendered);
+
+      const single = await exportRequest("?format=single-png");
+      const zip = await exportRequest();
+
+      expect(single.status).toBe(200);
+      expect(single.headers.get("Content-Type")).toBe("image/png");
+      expect(single.headers.get("Content-Disposition")).toBe(
+        'attachment; filename="carousel-Launch_week__v2_.png"'
+      );
+      const png = Buffer.from(await single.arrayBuffer());
+      const [entry] = readZipEntries(Buffer.from(await zip.arrayBuffer()));
+      expect(entry.name).toBe("slide-1.png");
+      expect(png.equals(entry.data)).toBe(true);
+      expect(png.equals(rendered[0].buffer)).toBe(true);
+
+      // An ordinary, directly openable PNG at the slide's exact size.
+      expect(png.subarray(0, 8)).toEqual(
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+      );
+      const { width, height } = DIMENSIONS[ratio];
+      expect(png.readUInt32BE(16)).toBe(width);
+      expect(png.readUInt32BE(20)).toBe(height);
+    });
+  }
+
+  it("renders through the same renderer as the ZIP, once", async () => {
+    const c = carousel("4:5", 1);
+    getCarouselMock.mockResolvedValue(c);
+    exportAllSlidesMock.mockResolvedValue(await renderedPngs("4:5", 1));
+
+    await exportRequest("?format=single-png");
+
+    expect(exportAllSlidesMock).toHaveBeenCalledTimes(1);
+    expect(exportAllSlidesMock).toHaveBeenCalledWith(c.slides, "4:5");
+  });
+
+  it("refuses a multi-slide carousel before rendering, pointing to the ZIP", async () => {
+    getCarouselMock.mockResolvedValue(carousel("4:5", 3));
+
+    const response = await exportRequest("?format=single-png");
+
+    expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: string }).error).toMatch(
+      /only available for a carousel with one slide.*PNG ZIP/
+    );
+    expect(exportAllSlidesMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves a one-slide ZIP and PDF as they were", async () => {
+    const rendered = await renderedPngs("1:1", 1);
+    getCarouselMock.mockResolvedValue(carousel("1:1", 1));
+    exportAllSlidesMock.mockResolvedValue(rendered);
+
+    const zip = await exportRequest("?format=png");
+    expect(zip.headers.get("Content-Type")).toBe("application/zip");
+    const entries = readZipEntries(Buffer.from(await zip.arrayBuffer()));
+    expect(entries).toHaveLength(1);
+    expect(entries[0].data.equals(rendered[0].buffer)).toBe(true);
+
+    const pdf = await exportRequest("?format=pdf");
+    expect(pdf.headers.get("Content-Type")).toBe("application/pdf");
+    const pages = await readPdfPages(new Uint8Array(await pdf.arrayBuffer()));
+    expect(pages).toHaveLength(1);
+    expect(
+      pages[0].images[0].pixels.equals(await rgbPixels(rendered[0].buffer))
+    ).toBe(true);
+  });
+});
+
+describe("export during generation", () => {
+  for (const query of ["", "?format=png", "?format=pdf", "?format=single-png"]) {
+    it(`refuses with 409 before rendering (${query || "no format"})`, async () => {
+      getCarouselMock.mockResolvedValue(carousel("4:5", 1));
+      const end = beginGeneration("c1");
+      try {
+        const response = await exportRequest(query);
+        expect(response.status).toBe(409);
+        expect(await response.json()).toEqual({
+          error:
+            "Slides are still being generated. Export will be available as soon as generation finishes.",
+        });
+        expect(exportAllSlidesMock).not.toHaveBeenCalled();
+      } finally {
+        end();
+      }
+    });
+  }
+
+  it("exports normally once the run has ended", async () => {
+    getCarouselMock.mockResolvedValue(carousel("4:5", 2));
+    exportAllSlidesMock.mockResolvedValue(await renderedPngs("4:5", 2));
+    beginGeneration("c1")();
+
+    const response = await exportRequest();
+
+    expect(response.status).toBe(200);
+  });
+
+  it("does not block other carousels", async () => {
+    getCarouselMock.mockResolvedValue(carousel("4:5", 1));
+    exportAllSlidesMock.mockResolvedValue(await renderedPngs("4:5", 1));
+    const end = beginGeneration("another-carousel");
+    try {
+      expect((await exportRequest()).status).toBe(200);
+    } finally {
+      end();
+    }
+  });
+});
+
 describe("export errors", () => {
   it("rejects an unknown format before rendering anything", async () => {
     getCarouselMock.mockResolvedValue(carousel("4:5", 2));
@@ -209,7 +326,7 @@ describe("export errors", () => {
     expect(exportAllSlidesMock).not.toHaveBeenCalled();
   });
 
-  for (const query of ["", "?format=pdf"]) {
+  for (const query of ["", "?format=pdf", "?format=single-png"]) {
     it(`answers 404 for a missing carousel (${query || "no format"})`, async () => {
       getCarouselMock.mockResolvedValue(null);
       const response = await exportRequest(query);

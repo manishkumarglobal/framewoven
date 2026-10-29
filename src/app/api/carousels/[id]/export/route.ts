@@ -4,6 +4,10 @@ import { getCarousel } from "@/lib/carousels";
 import { exportAllSlides, describeExportFailure } from "@/lib/export-slides";
 import { buildSlidesPdf, PdfExportError } from "@/lib/export-pdf";
 import { parseExportFormat } from "@/lib/export-formats";
+import {
+  GENERATION_IN_PROGRESS_ERROR,
+  isGenerating,
+} from "@/lib/generation-status";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +23,10 @@ export async function POST(
   const format = parseExportFormat(new URL(request.url).searchParams.get("format"));
   if (!format) {
     return NextResponse.json(
-      { error: 'Unknown export format. Use "png" for a ZIP of PNGs or "pdf" for a PDF.' },
+      {
+        error:
+          'Unknown export format. Use "png" for a ZIP of PNGs, "pdf" for a PDF, or "single-png" for the PNG of a one-slide carousel.',
+      },
       { status: 400 }
     );
   }
@@ -30,9 +37,30 @@ export async function POST(
     return NextResponse.json({ error: "Carousel not found" }, { status: 404 });
   }
 
+  // The design agent may still be adding or rewriting slides. Exporting now
+  // would package whatever happens to be saved mid-run.
+  if (isGenerating(carousel.id)) {
+    return NextResponse.json(
+      { error: GENERATION_IN_PROGRESS_ERROR },
+      { status: 409 }
+    );
+  }
+
   if (carousel.slides.length === 0) {
     return NextResponse.json({ error: "No slides to export" }, { status: 400 });
   }
+
+  if (format === "single-png" && carousel.slides.length !== 1) {
+    return NextResponse.json(
+      {
+        error:
+          "A single PNG download is only available for a carousel with one slide. Use the PNG ZIP to download every slide.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const fileBase = `carousel-${carousel.name.replace(/[^a-zA-Z0-9-_]/g, "_")}`;
 
   try {
     // Export all slides to PNG buffers
@@ -40,6 +68,16 @@ export async function POST(
       carousel.slides,
       carousel.aspectRatio
     );
+
+    if (format === "single-png") {
+      // The exact bytes the ZIP would hold as slide-1.png, not re-encoded.
+      return new Response(new Uint8Array(pngBuffers[0].buffer), {
+        headers: {
+          "Content-Type": "image/png",
+          "Content-Disposition": `attachment; filename="${fileBase}.png"`,
+        },
+      });
+    }
 
     if (format === "pdf") {
       // The PDF pages are the PNGs rendered above, so both formats show the
@@ -52,7 +90,7 @@ export async function POST(
       return new Response(new Uint8Array(pdfBytes), {
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="carousel-${carousel.name.replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf"`,
+          "Content-Disposition": `attachment; filename="${fileBase}.pdf"`,
         },
       });
     }
@@ -88,7 +126,7 @@ export async function POST(
     return new Response(new Uint8Array(zipBuffer), {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="carousel-${carousel.name.replace(/[^a-zA-Z0-9-_]/g, "_")}.zip"`,
+        "Content-Disposition": `attachment; filename="${fileBase}.zip"`,
       },
     });
   } catch (error) {

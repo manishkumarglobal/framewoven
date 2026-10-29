@@ -35,7 +35,8 @@ design agent is told to call is derived per request by `resolveAppOrigin()` in
 - `PUT/DELETE /api/carousels/[id]/slides/[slideId]` — Update/delete slide
 - `PUT /api/carousels/[id]/slides` — Reorder slides (body: { slideIds: [...] })
 - `POST /api/carousels/[id]/slides/[slideId]/undo` — Undo slide change
-- `POST /api/carousels/[id]/export` — Export all slides to PNG ZIP (default, or `?format=png`) or to one LinkedIn PDF (`?format=pdf`)
+- `POST /api/carousels/[id]/export` — Export all slides to PNG ZIP (default, or `?format=png`) or to one LinkedIn PDF (`?format=pdf`); a one-slide carousel also as that single PNG (`?format=single-png`). Answers 409 while a chat run is still generating the carousel
+- `GET /api/carousels/[id]/generation` — `{ generating }`: whether a chat run is still writing this carousel's slides
 - `GET/PUT /api/brand`: the default brand's configuration (kept for compatibility)
 - `GET/POST /api/brands`: list brands with `defaultBrandId`, or create a brand
 - `GET/PUT /api/brands/[id]`: one brand's configuration

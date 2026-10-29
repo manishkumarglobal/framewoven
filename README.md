@@ -85,10 +85,14 @@ The agent can also read this app's local data through its API, and it may fetch 
 - **Export for Instagram or LinkedIn.**
   The Export menu renders every slide in headless Chromium at the carousel's exact dimensions and offers two downloads:
   - **Instagram · PNG ZIP**: one PNG per slide, in a ZIP.
+    A carousel with a single slide, such as a reel cover, can also be downloaded as that one PNG with **Instagram · PNG**, no ZIP to extract.
   - **LinkedIn · PDF**: one PDF for a LinkedIn document post, with one page per slide in carousel order.
     Each page is the slide's PNG, embedded losslessly on a page with the carousel's own aspect ratio, so the PDF shows exactly the same pixels as the PNGs.
     4:5 portrait is the recommended LinkedIn format; 1:1 exports as square pages, and 9:16 exports as-is with a note that 4:5 generally displays better in LinkedIn's feed.
     A PDF larger than LinkedIn's 100 MB limit is refused with a message saying what to change.
+
+  While the design agent is still creating or changing slides, the Export button reads **Waiting for slides…** and is unavailable, so a download never captures a half-finished carousel.
+  It becomes available again as soon as the agent finishes, fails or is stopped, including after a page reload.
 
   If an export fails, the editor tells you what went wrong.
 
@@ -194,9 +198,11 @@ Slides are stored as body-level HTML, without `<html>`, `<head>`, or `<!DOCTYPE>
 `wrapSlideHtml()` in [`src/lib/slide-html.ts`](./src/lib/slide-html.ts) wraps that body into a full document with font loading and fixed dimensions.
 The same function feeds both the sandboxed preview iframe and the Puppeteer export, which screenshots each slide at its exact pixel size.
 
-`POST /api/carousels/[id]/export` packages those screenshots in one of two ways.
+`POST /api/carousels/[id]/export` packages those screenshots in one of three ways.
 Without a `format`, or with `?format=png`, it answers with a ZIP of PNGs, as it always has.
 With `?format=pdf`, [`src/lib/export-pdf.ts`](./src/lib/export-pdf.ts) embeds the same PNGs into a PDF, one page per slide.
+With `?format=single-png`, a carousel with exactly one slide is answered with that slide's PNG itself, the same bytes the ZIP would contain.
+While a chat run is still writing the carousel's slides, every format is refused with status 409.
 Pages are sized at 0.75 pt per pixel (72 pt per inch over 96 CSS pixels per inch), so a 1080×1350 slide becomes an 810×1012.5 pt page, keeping its exact aspect ratio.
 
 ## Slash commands and scripts
