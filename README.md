@@ -59,6 +59,11 @@ The agent can also read this app's local data through its API, and it may fetch 
 - **Brand configuration.**
   A setup dialog saves your brand name, five colors, heading and body fonts from a curated list of Google Fonts, an optional logo, and style keywords.
   Once a brand name is set, every chat request gives these to the design agent.
+- **Multiple brands.**
+  One installation can hold several brands.
+  The dashboard's brand selector shows one brand's carousels and templates at a time, and **Add brand** and the pencil button create and edit brands.
+  Each carousel belongs to the brand it was created in, shown in the editor's top bar, and the design agent always works with that brand, whichever brand the dashboard is showing.
+  A carousel's brand cannot be changed later, and brands cannot be deleted yet.
 - **Brand fonts in preview and export.**
   Preview loads fonts from Google Fonts, and export embeds them into each slide so the PNGs use the real typefaces.
 - **Three Instagram formats.**
@@ -148,7 +153,8 @@ Git tracks only the source; everything you create stays local and is ignored by 
 
 | Location | Contents |
 |---|---|
-| `data/brand.json` | Brand configuration |
+| `data/brands.json` | Brands, each with a stable ID, and which one is the default |
+| `data/brand.json` | The single brand from before multiple brands existed; read once to create `brands.json`, then kept unchanged as a backup |
 | `data/carousels.json` | Carousels and their slides, including undo history and captions |
 | `data/templates.json` | Saved templates |
 | `data/style-presets.json` | Style presets the design agent can save |
@@ -163,13 +169,15 @@ Exports are not stored; each export is built in memory and downloaded as a ZIP o
 
 Updating Framewoven with `git pull` does not touch these files.
 To back up your work, copy `data/`, `public/uploads/`, and `.env.local`.
-`/reset` deletes your carousels, templates, brand, style presets, and uploads and re-seeds empty defaults, after asking for confirmation.
+`/reset` deletes your carousels, templates, brands, style presets, and uploads and re-seeds empty defaults, after asking for confirmation.
 It does not touch browser local storage or Claude Code's session records.
+The dashboard's selected brand is a preference kept in browser local storage; it changes what the dashboard shows and nothing stored on disk.
 
 ## How the design agent works
 
 When you send a chat message, `/api/chat` starts the Claude CLI as a subprocess with `--allowedTools Bash WebFetch Read` and streams its replies back to the browser as Server-Sent Events.
-The agent's system prompt includes your brand configuration, the open carousel's slide list (IDs and notes), its reference images, and the address of this running app.
+The agent's system prompt includes the open carousel's brand configuration, its slide list (IDs and notes), its reference images, and the address of this running app.
+Carousels created before multiple brands existed belong to the default brand, the original one.
 The agent reads and writes slide content through the app's API.
 
 The agent then works through the app's own API:
@@ -292,7 +300,8 @@ Setup prints the cached Chromium folder to delete and the command to download it
 On Linux you may need Chromium's system libraries, such as `libnss3`, `libatk1.0-0`, and `libxss1`.
 
 **Generated slides ignore my brand.**
-Open brand setup with the gear icon and confirm a brand name, colors, and style keywords are saved.
+Check the brand shown next to the carousel's name in the editor: the design agent uses that brand, not the one selected on the dashboard.
+Select that brand on the dashboard, open its settings with the pencil button, and confirm a brand name, colors, and style keywords are saved.
 Brand details reach the design agent only when a brand name is set.
 
 **Something else.**
@@ -303,7 +312,6 @@ Run `/doctor` or `npm run doctor` for an environment check, and [open an Issue](
 These are planned directions, not shipped features.
 Each will be tracked as an Issue and listed in the [changelog](./CHANGELOG.md) only when released.
 
-- **Multiple independent brand profiles**, so one installation can serve several brands.
 - **Improved content workflows** for planning and iterating on a series of posts.
 - **Reusable branded templates** that carry a brand's layout system, beyond today's saved-carousel templates.
 - **Additional platform support** beyond Instagram's formats.

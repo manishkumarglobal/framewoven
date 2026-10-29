@@ -1,5 +1,6 @@
 import { readDataSafe, mutateData } from "./data";
 import { generateId, now } from "./utils";
+import { brandIdOf } from "./brand-ownership";
 import type { Brand, BrandConfig, BrandsData } from "@/types/brand";
 import { DEFAULT_BRAND } from "@/types/brand";
 import type { Carousel } from "@/types/carousel";
@@ -143,12 +144,7 @@ export async function createBrand(updates: BrandUpdate): Promise<Brand> {
 }
 
 /** The brand a carousel or template belongs to; none means the default brand. */
-export function brandIdOf(
-  record: { brandId?: string },
-  defaultBrandId: string
-): string {
-  return record.brandId ?? defaultBrandId;
-}
+export { brandIdOf };
 
 /**
  * The brand the design agent works with for a carousel: the one it was created

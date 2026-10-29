@@ -7,56 +7,78 @@ import { Input } from "@/components/ui/input";
 import { ColorPicker } from "./ColorPicker";
 import { FontSelector } from "./FontSelector";
 import { LogoUpload } from "./LogoUpload";
-import type { BrandConfig } from "@/types/brand";
+import { StyleKeywordPicker } from "./StyleKeywordPicker";
+import type { Brand, BrandConfig } from "@/types/brand";
 import { DEFAULT_BRAND } from "@/types/brand";
+import { brandSaveTarget, type BrandSetupMode } from "@/lib/brand-save-target";
+
+export type { BrandSetupMode };
 
 interface BrandSetupProps {
   open: boolean;
-  onComplete: () => void;
+  /** Called with the saved brand, or with nothing when the dialog is dismissed. */
+  onComplete: (saved?: Brand) => void;
   initialBrand?: BrandConfig;
+  mode?: BrandSetupMode;
+  brandId?: string;
 }
 
-const STYLE_OPTIONS = [
-  "minimal",
-  "bold",
-  "playful",
-  "corporate",
-  "luxury",
-  "vintage",
-  "modern",
-  "elegant",
-  "creative",
-  "professional",
-];
+const TITLES: Record<BrandSetupMode, string> = {
+  setup: "Set Up Your Brand",
+  edit: "Edit Brand",
+  create: "Add a Brand",
+};
+
+const SAVE_LABELS: Record<BrandSetupMode, string> = {
+  setup: "Complete Setup",
+  edit: "Save Changes",
+  create: "Create Brand",
+};
 
 const STEPS = ["Brand Name", "Colors", "Fonts", "Logo", "Style"];
 
-export function BrandSetup({ open, onComplete, initialBrand }: BrandSetupProps) {
+export function BrandSetup({ open, onComplete, initialBrand, mode = "setup", brandId }: BrandSetupProps) {
   const [step, setStep] = useState(0);
   const [brand, setBrand] = useState<BrandConfig>(
     initialBrand || DEFAULT_BRAND
   );
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Each opening starts from the brand being edited, or from defaults for a new one.
   useEffect(() => {
-    if (initialBrand) setBrand(initialBrand);
-  }, [initialBrand]);
+    if (!open) return;
+    setBrand(initialBrand || DEFAULT_BRAND);
+    setStep(0);
+    setSaveError(null);
+  }, [open, initialBrand]);
 
   const handleSave = useCallback(async () => {
+    const target = brandSaveTarget(mode, brandId);
+    if (!target) {
+      setSaveError("No brand is selected to save to. Close this dialog and try again.");
+      return;
+    }
     setSaving(true);
+    setSaveError(null);
     try {
-      await fetch("/api/brand", {
-        method: "PUT",
+      const res = await fetch(target.url, {
+        method: target.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(brand),
       });
-      onComplete();
-    } catch {
-      // ignore
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((body as { error?: string }).error || `Saving failed with status ${res.status}.`);
+      }
+      onComplete(body as Brand);
+    } catch (err) {
+      // Stay open so nothing typed is lost and the failure is visible.
+      setSaveError(err instanceof Error ? err.message : "The brand could not be saved.");
     } finally {
       setSaving(false);
     }
-  }, [brand, onComplete]);
+  }, [brand, brandId, mode, onComplete]);
 
   // Escape key handler
   useEffect(() => {
@@ -78,7 +100,7 @@ export function BrandSetup({ open, onComplete, initialBrand }: BrandSetupProps) 
       <div className="oc-enter-pop bg-surface rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden relative">
         {/* Close button */}
         <button
-          onClick={onComplete}
+          onClick={() => onComplete()}
           className="absolute top-4 right-4 h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors z-10"
           aria-label="Close"
         >
@@ -92,7 +114,7 @@ export function BrandSetup({ open, onComplete, initialBrand }: BrandSetupProps) 
               <Palette className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">Set Up Your Brand</h2>
+              <h2 className="text-lg font-bold">{TITLES[mode]}</h2>
               <p className="text-xs text-muted-foreground">
                 Step {step + 1} of {STEPS.length}: {STEPS[step]}
               </p>
@@ -224,36 +246,18 @@ export function BrandSetup({ open, onComplete, initialBrand }: BrandSetupProps) 
           )}
 
           {step === 4 && (
-            <div>
-              <label className="text-sm font-medium">
-                Choose your brand style
-              </label>
-              <p className="text-xs text-muted-foreground mt-1 mb-3">
-                Select keywords that describe your visual identity
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {STYLE_OPTIONS.map((keyword) => (
-                  <button
-                    key={keyword}
-                    onClick={() => {
-                      const keywords = brand.styleKeywords.includes(keyword)
-                        ? brand.styleKeywords.filter((k) => k !== keyword)
-                        : [...brand.styleKeywords, keyword];
-                      setBrand({ ...brand, styleKeywords: keywords });
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-                      brand.styleKeywords.includes(keyword)
-                        ? "bg-accent text-accent-foreground border-accent"
-                        : "bg-transparent text-foreground border-border hover:border-muted-foreground"
-                    }`}
-                  >
-                    {keyword}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <StyleKeywordPicker
+              value={brand.styleKeywords}
+              onChange={(styleKeywords) => setBrand({ ...brand, styleKeywords })}
+            />
           )}
         </div>
+
+        {saveError && (
+          <p role="alert" className="px-6 pb-2 text-xs text-destructive">
+            {saveError}
+          </p>
+        )}
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border flex items-center justify-between">
@@ -285,7 +289,7 @@ export function BrandSetup({ open, onComplete, initialBrand }: BrandSetupProps) 
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  Complete Setup
+                  {SAVE_LABELS[mode]}
                 </>
               )}
             </Button>

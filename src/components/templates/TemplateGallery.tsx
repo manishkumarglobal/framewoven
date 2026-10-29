@@ -6,20 +6,33 @@ import { Bookmark } from "lucide-react";
 import { TemplateCard } from "./TemplateCard";
 import type { Template } from "@/types/template";
 
-export function TemplateGallery() {
+interface TemplateGalleryProps {
+  /** Shows only this brand's templates; using one creates a carousel in that brand. */
+  brandId: string | null;
+}
+
+export function TemplateGallery({ brandId }: TemplateGalleryProps) {
   const router = useRouter();
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Tagged with the brand it was fetched for, so a list never shows under another brand.
+  const [loaded, setLoaded] = useState<{ brandId: string; templates: Template[] } | null>(null);
+  const loading = !brandId || loaded?.brandId !== brandId;
+  const templates = loaded?.templates ?? [];
 
   useEffect(() => {
-    fetch("/api/templates")
+    if (!brandId) return;
+    let current = true;
+    fetch(`/api/templates?brandId=${encodeURIComponent(brandId)}`)
       .then((r) => r.json())
       .then((data) => {
-        setTemplates(data.templates || []);
-        setLoading(false);
+        if (current) setLoaded({ brandId, templates: data.templates || [] });
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .catch(() => {
+        if (current) setLoaded({ brandId, templates: [] });
+      });
+    return () => {
+      current = false;
+    };
+  }, [brandId]);
 
   const handleUse = useCallback(
     async (templateId: string) => {
@@ -39,7 +52,7 @@ export function TemplateGallery() {
       method: "DELETE",
     });
     if (res.ok) {
-      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
+      setLoaded((prev) => prev && { ...prev, templates: prev.templates.filter((t) => t.id !== templateId) });
     }
   }, []);
 
@@ -57,7 +70,7 @@ export function TemplateGallery() {
     return (
       <div className="text-center py-12">
         <Bookmark className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">No templates saved yet</p>
+        <p className="text-sm text-muted-foreground">No templates for this brand yet</p>
         <p className="text-xs text-muted-foreground mt-1">
           Save a carousel as a template to reuse it later
         </p>

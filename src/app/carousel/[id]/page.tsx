@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Trash2, Grid3X3, Bookmark, Maximize2 } from "lucide-react";
 import { TopBar } from "@/components/layout/TopBar";
+import { CarouselBrandBadge } from "@/components/brand/CarouselBrandBadge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ChatPanel } from "@/components/chat/ChatPanel";
@@ -238,7 +239,9 @@ export default function CarouselEditorPage({ params }: PageProps) {
             setCarousel(updated);
           }
         }}
-      />
+      >
+        <CarouselBrandBadge brandId={carousel.brandId} />
+      </TopBar>
 
       {/* Fullscreen preview */}
       <FullscreenPreview

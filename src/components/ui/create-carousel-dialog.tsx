@@ -7,32 +7,46 @@ import { Button } from "./button";
 import { Input } from "./input";
 import { AspectRatioSelector } from "@/components/editor/AspectRatioSelector";
 import type { AspectRatio } from "@/types/carousel";
+import type { Brand } from "@/types/brand";
 
 interface CreateCarouselDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (name: string, aspectRatio: AspectRatio) => void;
+  onCreate: (name: string, aspectRatio: AspectRatio, brandId: string) => void;
+  brands: Brand[];
+  /** Preselected: the brand the dashboard is showing. */
+  selectedBrandId: string | null;
 }
 
 export function CreateCarouselDialog({
   open,
   onOpenChange,
   onCreate,
+  brands,
+  selectedBrandId,
 }: CreateCarouselDialogProps) {
   const [name, setName] = useState("");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("4:5");
+  // Until the user picks one, the brand follows the dashboard's selection.
+  const [brandChoice, setBrandChoice] = useState<string | null>(null);
+  const brandId = brandChoice ?? selectedBrandId ?? "";
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) setBrandChoice(null);
+    onOpenChange(next);
+  };
 
   const handleCreate = () => {
     const trimmed = name.trim();
-    if (!trimmed) return;
-    onCreate(trimmed, aspectRatio);
+    if (!trimmed || !brandId) return;
+    onCreate(trimmed, aspectRatio, brandId);
     setName("");
     setAspectRatio("4:5");
-    onOpenChange(false);
+    handleOpenChange(false);
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay data-oc-overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
         <Dialog.Content data-oc-dialog className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-surface border border-border p-6 shadow-2xl">
@@ -72,6 +86,27 @@ export function CreateCarouselDialog({
             </div>
 
             <div>
+              <label htmlFor="new-carousel-brand" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                Brand
+              </label>
+              <select
+                id="new-carousel-brand"
+                value={brandId}
+                onChange={(e) => setBrandChoice(e.target.value)}
+                className="h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+              >
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name.trim() || "Unnamed brand"}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                A carousel keeps this brand for good.
+              </p>
+            </div>
+
+            <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Aspect Ratio
               </label>
@@ -92,7 +127,7 @@ export function CreateCarouselDialog({
               variant="accent"
               size="sm"
               onClick={handleCreate}
-              disabled={!name.trim()}
+              disabled={!name.trim() || !brandId}
             >
               Create
             </Button>
