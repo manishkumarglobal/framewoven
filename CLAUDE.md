@@ -7,6 +7,7 @@ Derived from the MIT-licensed Open Carrusel project and now independently mainta
 ## Architecture
 
 - **Frontend**: React app (localhost:3000 by default; `/start [port]` and `PORT` override it) with chat panel (left), carousel preview (center), slide filmstrip (bottom)
+- **Network**: `npm run dev` and `npm start` listen on 127.0.0.1 only. `src/proxy.ts` refuses `/api/*` requests whose `Host` is not loopback, and state-changing requests carrying another site's `Origin`; requests without `Origin` (the agent's curl) are allowed
 - **AI Agent**: Claude CLI spawned as subprocess via `/api/chat`, communicates through SSE streaming
 - **Storage**: JSON files in `/data/` with async-mutex locking and atomic writes
 - **Export**: Puppeteer screenshots HTML slides to PNG at exact Instagram dimensions

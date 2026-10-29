@@ -136,6 +136,7 @@ npm run setup
 `npm run setup` installs dependencies, downloads Chromium, seeds empty data files, looks for the Claude CLI, and then starts the dev server at http://localhost:3000 in the foreground.
 Press Ctrl+C to stop it, and run `npm run dev` to start it again later.
 To use another port, run `PORT=3001 npm run dev` on macOS or Linux, or `$env:PORT=3001; npm run dev` in Windows PowerShell.
+The server listens on this machine only (127.0.0.1), so it is not reachable from other devices on your network, and its API refuses requests sent by other websites.
 
 If setup cannot find the Claude CLI, it prints a warning and the app runs without the design agent.
 Set `CLAUDE_CLI_PATH` in `.env.local` to the full path of your `claude` executable, then restart the dev server.
