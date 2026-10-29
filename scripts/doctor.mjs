@@ -88,7 +88,7 @@ let portFree = true;
 if (platform() !== "win32") {
   const pid = tryExec("lsof -ti :3000");
   if (pid) {
-    portStatus = `in use by PID ${pid.split("\n")[0]} — \`/stop\` to kill`;
+    portStatus = `in use by PID ${pid.split("\n")[0]} — \`/stop 3000\` stops it if it is this checkout's server`;
     portFree = false;
   }
 } else {
