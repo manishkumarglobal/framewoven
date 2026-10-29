@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import crossSpawn from "cross-spawn";
 import { getClaudePath, isClaudeAvailable } from "@/lib/claude-path";
 import { buildSystemPrompt } from "@/lib/chat-system-prompt";
-import { getBrand } from "@/lib/brand";
+import { resolveBrandForCarousel, BrandNotFoundError } from "@/lib/brand";
 import { getCarousel } from "@/lib/carousels";
 import { getPreset } from "@/lib/style-presets";
 import { dataErrorResponse } from "@/lib/api-errors";
@@ -47,11 +47,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   }
 
-  // Build dynamic system prompt with current brand + carousel + style preset context
+  // Build dynamic system prompt with the carousel's brand + carousel + style preset context
   let systemPrompt: string;
   try {
-    const brand = await getBrand();
     const carousel = carouselId ? await getCarousel(carouselId) : null;
+    // The brand the carousel was created in; the default brand for carousels
+    // made before brands existed.
+    const brand = await resolveBrandForCarousel(carousel);
     const stylePreset = stylePresetId ? await getPreset(stylePresetId) : null;
     systemPrompt = buildSystemPrompt({
       // The agent curls this app's own API, so it must be told the origin the
@@ -62,6 +64,13 @@ export async function POST(request: NextRequest) {
       stylePreset,
     });
   } catch (err) {
+    if (err instanceof BrandNotFoundError) {
+      // Never generate with a different brand than the carousel's own.
+      return NextResponse.json(
+        { error: "This carousel's brand no longer exists." },
+        { status: 409 }
+      );
+    }
     const dataError = dataErrorResponse(err);
     if (dataError) return dataError;
     throw err;

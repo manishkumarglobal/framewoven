@@ -27,6 +27,17 @@ export interface BrandConfig {
   updatedAt: string;
 }
 
+/** A stored brand: its configuration plus a stable id that never changes. */
+export interface Brand extends BrandConfig {
+  id: string;
+}
+
+export interface BrandsData {
+  /** The brand that carousels and templates without a `brandId` belong to. */
+  defaultBrandId: string;
+  brands: Brand[];
+}
+
 export const DEFAULT_BRAND: BrandConfig = {
   name: "",
   colors: {
