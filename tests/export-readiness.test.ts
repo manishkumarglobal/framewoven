@@ -25,7 +25,7 @@ const { POST: chat } = await import("@/app/api/chat/route");
 const { POST: exportCarousel } = await import(
   "@/app/api/carousels/[id]/export/route"
 );
-const { GET: generationStatus } = await import(
+const { GET: generationStatus, DELETE: acceptSlides } = await import(
   "@/app/api/carousels/[id]/generation/route"
 );
 const { addSlide, createCarousel, getCarousel } = await import("@/lib/carousels");
@@ -44,7 +44,8 @@ const finish = path.join(dir, "finish");
 const timer = setInterval(() => {
   if (!existsSync(finish)) return;
   clearInterval(timer);
-  console.log(JSON.stringify({ type: "result", session_id: "fake-session", result: "Done." }));
+  const isError = existsSync(path.join(dir, "result-error"));
+  console.log(JSON.stringify({ type: "result", session_id: "fake-session", result: "Done.", is_error: isError }));
   process.exit(Number(readFileSync(finish, "utf8")) || 0);
 }, 20);
 `;
@@ -137,13 +138,32 @@ function requestExport(id: string, format?: string) {
   );
 }
 
-async function statusOf(id: string): Promise<boolean> {
+interface Status {
+  generating: boolean;
+  interrupted: { reason: string; endedAt: string } | null;
+}
+
+async function statusOf(id: string): Promise<Status> {
   const res = await generationStatus(
     new Request(`http://localhost:3000/api/carousels/${id}/generation`),
     { params: Promise.resolve({ id }) }
   );
   expect(res.headers.get("Cache-Control")).toBe("no-store");
-  return ((await res.json()) as { generating: boolean }).generating;
+  return (await res.json()) as Status;
+}
+
+/** The editor's "Use these slides". */
+async function useSlidesAsTheyAre(id: string) {
+  return acceptSlides(
+    new Request(`http://localhost:3000/api/carousels/${id}/generation`, { method: "DELETE" }),
+    { params: Promise.resolve({ id }) }
+  );
+}
+
+/** The design agent saving a slide mid-run, a moment after the run began. */
+async function agentSavesSlide(id: string, html = "<div>Saved by the agent</div>") {
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  await addSlide(id, html);
 }
 
 async function fakeCliPid(): Promise<number> {
@@ -168,7 +188,7 @@ describe("export while the design agent is generating", () => {
     const res = await startChat(carousel.id);
     expect(res.status).toBe(200);
     expect(isGenerating(carousel.id)).toBe(true);
-    expect(await statusOf(carousel.id)).toBe(true);
+    expect((await statusOf(carousel.id)).generating).toBe(true);
 
     // The agent has saved one of the slides it is going to write.
     for (const format of [undefined, "png", "pdf", "single-png"]) {
@@ -187,7 +207,7 @@ describe("export while the design agent is generating", () => {
     expect(streamed).toContain("event: done");
 
     expect(isGenerating(carousel.id)).toBe(false);
-    expect(await statusOf(carousel.id)).toBe(false);
+    expect(await statusOf(carousel.id)).toEqual({ generating: false, interrupted: null });
 
     const exported = await requestExport(carousel.id);
     expect(exported.status).toBe(200);
@@ -197,10 +217,11 @@ describe("export while the design agent is generating", () => {
     expect(exportAllSlidesMock).toHaveBeenCalledWith(saved!.slides, "4:5");
   });
 
-  it("makes export available again after a failed run, with the slides it saved", async () => {
+  it("holds back a failed run's partial slides until the user confirms them", async () => {
     const carousel = await createCarousel("Failed run", "1:1");
+    await addSlide(carousel.id, "<div>Existing slide</div>");
     const res = await startChat(carousel.id);
-    await addSlide(carousel.id, "<div>Saved before the failure</div>");
+    await agentSavesSlide(carousel.id, "<div>Saved before the failure</div>");
     expect((await requestExport(carousel.id)).status).toBe(409);
 
     await finishRun(1);
@@ -208,8 +229,57 @@ describe("export while the design agent is generating", () => {
     expect(streamed).toContain("Claude CLI exited with code 1");
     expect(streamed).toContain("event: done");
 
-    expect(await statusOf(carousel.id)).toBe(false);
+    const status = await statusOf(carousel.id);
+    expect(status.generating).toBe(false);
+    expect(status.interrupted).toMatchObject({ reason: "failed" });
+    const refused = await requestExport(carousel.id);
+    expect(refused.status).toBe(409);
+    expect(((await refused.json()) as { error: string }).error).toMatch(
+      /^The last generation failed before it finished, so these slides may be incomplete/
+    );
+    expect(exportAllSlidesMock).not.toHaveBeenCalled();
+    // Nothing the run saved is lost.
+    expect((await getCarousel(carousel.id))!.slides).toHaveLength(2);
+
+    expect((await useSlidesAsTheyAre(carousel.id)).status).toBe(200);
+    expect(await statusOf(carousel.id)).toEqual({ generating: false, interrupted: null });
     expect((await requestExport(carousel.id)).status).toBe(200);
+  });
+
+  it("holds back slides from a run stopped or reloaded mid-way, until a later run completes", async () => {
+    const carousel = await createCarousel("Stopped run", "4:5");
+    const first = await startChat(carousel.id);
+    await fakeCliPid();
+    await agentSavesSlide(carousel.id, "<div>1 of 5</div>");
+
+    // Stop, a reload and a closed tab all reach the server as this.
+    await first.body!.cancel();
+    await waitFor(() => !isGenerating(carousel.id));
+    expect((await statusOf(carousel.id)).interrupted).toMatchObject({ reason: "stopped" });
+    expect((await requestExport(carousel.id, "single-png")).status).toBe(409);
+    expect((await getCarousel(carousel.id))!.slides).toHaveLength(1);
+
+    // "Continue" in the chat: the next run finishes the carousel.
+    await rm(path.join(fakeDir, "pid"), { force: true });
+    const second = await startChat(carousel.id);
+    await fakeCliPid();
+    await agentSavesSlide(carousel.id, "<div>2 of 5</div>");
+    await finishRun(0);
+    await second.text();
+
+    expect(await statusOf(carousel.id)).toEqual({ generating: false, interrupted: null });
+    expect((await requestExport(carousel.id)).status).toBe(200);
+  });
+
+  it("counts a clean exit whose result is an error as failed", async () => {
+    const carousel = await createCarousel("Budget ran out", "4:5");
+    await writeFile(path.join(fakeDir, "result-error"), "");
+    const res = await startChat(carousel.id);
+    await agentSavesSlide(carousel.id);
+    await finishRun(0);
+    await res.text();
+
+    expect((await statusOf(carousel.id)).interrupted).toMatchObject({ reason: "failed" });
   });
 
   it("releases export after a cancelled chat only once the subprocess has exited", async () => {
@@ -225,6 +295,8 @@ describe("export while the design agent is generating", () => {
     await waitFor(() => !isGenerating(carousel.id));
     // Released on exit, never while the agent could still be writing.
     expect(isAlive(pid)).toBe(false);
+    // Stopped before the agent saved anything: the carousel is as it was.
+    expect((await statusOf(carousel.id)).interrupted).toBeNull();
     expect((await requestExport(carousel.id)).status).toBe(200);
   });
 
@@ -264,8 +336,8 @@ describe("export while the design agent is generating", () => {
     await addSlide(idle.id, "<div>Ready</div>");
 
     const res = await startChat(busy.id);
-    expect(await statusOf(busy.id)).toBe(true);
-    expect(await statusOf(idle.id)).toBe(false);
+    expect((await statusOf(busy.id)).generating).toBe(true);
+    expect((await statusOf(idle.id)).generating).toBe(false);
     expect((await requestExport(idle.id)).status).toBe(200);
 
     await finishRun(0);

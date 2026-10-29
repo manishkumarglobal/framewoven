@@ -29,9 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Export is no longer offered while the design agent is still creating or changing slides (#20).
   Exporting during that window could download a half-finished carousel.
-  The Export button now reads **Waiting for slides…** until the agent's run has ended, whether it finished, failed or was stopped, and this holds after a page reload or in a second tab.
-  The export API refuses such a carousel with status 409 and a message saying why, and `GET /api/carousels/[id]/generation` reports whether a run is still in progress.
-  Carousels that are not being generated export exactly as before.
+  The Export button now reads **Waiting for slides…** until the agent's run has ended, in every open editor tab, including one opened before the generation started.
+  A run that was stopped (with Stop, a page reload or a closed tab), failed or timed out after changing slides no longer passes for a finished carousel.
+  Its slides are all kept, but the Export button reads **Incomplete** and explains what happened, and export waits until you either choose **Use these slides** or ask the agent to continue and it finishes.
+  This survives a reload and a server restart; a run cut short by the server stopping counts as interrupted too.
+  The export API refuses a carousel in either state with status 409 and a message saying why.
+  `GET /api/carousels/[id]/generation` reports `{ generating, interrupted }`, and `DELETE` on it accepts an interrupted carousel's slides.
+  Carousels that are not being generated, and runs that changed nothing, export exactly as before.
 
 ## [0.1.3] - 2026-10-27
 

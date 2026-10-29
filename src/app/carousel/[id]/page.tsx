@@ -15,7 +15,7 @@ import { AspectRatioSelector } from "@/components/editor/AspectRatioSelector";
 import { ExportButton } from "@/components/editor/ExportButton";
 import { CaptionPanel } from "@/components/editor/CaptionPanel";
 import { FullscreenPreview } from "@/components/editor/FullscreenPreview";
-import { useServerGeneration } from "@/components/editor/useGenerationStatus";
+import { useGenerationStatus } from "@/components/editor/useGenerationStatus";
 import type { Carousel, AspectRatio } from "@/types/carousel";
 
 interface PageProps {
@@ -34,10 +34,11 @@ export default function CarouselEditorPage({ params }: PageProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSafeZones, setShowSafeZones] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
-  // This tab's chat stream, or a run the server is still finishing: after a
-  // reload, from another tab, or in the moment after the stream closes.
-  const serverGenerating = useServerGeneration(id, isGenerating);
-  const generationActive = isGenerating || serverGenerating;
+  // This tab's chat stream, or a run the server reports: started from another
+  // tab, still running after a reload, or settling after the stream closes.
+  // Also whether the last run was interrupted after changing slides.
+  const generation = useGenerationStatus(id, isGenerating);
+  const generationActive = generation.generating;
 
   // Confirm dialog state
   const [confirmState, setConfirmState] = useState<{
@@ -355,6 +356,8 @@ export default function CarouselEditorPage({ params }: PageProps) {
               slideCount={carousel.slides.length}
               aspectRatio={carousel.aspectRatio}
               generating={generationActive}
+              interrupted={generation.interrupted}
+              onAcceptInterrupted={generation.acceptSlides}
             />
           </div>
 

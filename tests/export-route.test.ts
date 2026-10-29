@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import type { AspectRatio, Carousel, Slide } from "@/types/carousel";
 import { DIMENSIONS } from "@/types/carousel";
 import { pdfPageSize } from "@/lib/export-pdf";
@@ -21,7 +24,23 @@ vi.mock("@/lib/export-slides", async (importOriginal) => ({
 const { getCarousel } = await import("@/lib/carousels");
 const { exportAllSlides } = await import("@/lib/export-slides");
 const { POST } = await import("@/app/api/carousels/[id]/export/route");
-const { beginGeneration } = await import("@/lib/generation-status");
+const { beginGeneration, acceptInterruptedSlides } = await import(
+  "@/lib/generation-status"
+);
+
+// How each generation ended is saved under ./data, so the route runs from a
+// throwaway working directory rather than the repository's.
+let workdir: string;
+let originalCwd: string;
+beforeAll(async () => {
+  originalCwd = process.cwd();
+  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-export-route-"));
+  process.chdir(workdir);
+});
+afterAll(async () => {
+  process.chdir(originalCwd);
+  await rm(workdir, { recursive: true, force: true });
+});
 
 const getCarouselMock = vi.mocked(getCarousel);
 const exportAllSlidesMock = vi.mocked(exportAllSlides);
@@ -276,7 +295,7 @@ describe("export during generation", () => {
   for (const query of ["", "?format=png", "?format=pdf", "?format=single-png"]) {
     it(`refuses with 409 before rendering (${query || "no format"})`, async () => {
       getCarouselMock.mockResolvedValue(carousel("4:5", 1));
-      const end = beginGeneration("c1");
+      const end = beginGeneration("c1", "");
       try {
         const response = await exportRequest(query);
         expect(response.status).toBe(409);
@@ -286,7 +305,7 @@ describe("export during generation", () => {
         });
         expect(exportAllSlidesMock).not.toHaveBeenCalled();
       } finally {
-        end();
+        await end("completed");
       }
     });
   }
@@ -294,7 +313,7 @@ describe("export during generation", () => {
   it("exports normally once the run has ended", async () => {
     getCarouselMock.mockResolvedValue(carousel("4:5", 2));
     exportAllSlidesMock.mockResolvedValue(await renderedPngs("4:5", 2));
-    beginGeneration("c1")();
+    await beginGeneration("c1", "")("completed");
 
     const response = await exportRequest();
 
@@ -304,12 +323,48 @@ describe("export during generation", () => {
   it("does not block other carousels", async () => {
     getCarouselMock.mockResolvedValue(carousel("4:5", 1));
     exportAllSlidesMock.mockResolvedValue(await renderedPngs("4:5", 1));
-    const end = beginGeneration("another-carousel");
+    const end = beginGeneration("another-carousel", null);
     try {
       expect((await exportRequest()).status).toBe(200);
     } finally {
-      end();
+      await end("completed");
     }
+  });
+});
+
+describe("export after an interrupted generation", () => {
+  // The mocked carousel's updatedAt is "", so a run that began at another
+  // time is one that changed it.
+  for (const reason of ["stopped", "failed", "timed-out"] as const) {
+    it(`refuses a carousel whose generation ${reason} after changing slides, in every format`, async () => {
+      getCarouselMock.mockResolvedValue(carousel("4:5", 1));
+      await beginGeneration("c1", "before the run")(reason);
+
+      for (const query of ["", "?format=png", "?format=pdf", "?format=single-png"]) {
+        const response = await exportRequest(query);
+        expect(response.status).toBe(409);
+        const body = (await response.json()) as {
+          error: string;
+          interrupted: { reason: string };
+        };
+        expect(body.error).toMatch(/before it finished, so these slides may be incomplete/);
+        expect(body.interrupted.reason).toBe(reason);
+      }
+      expect(exportAllSlidesMock).not.toHaveBeenCalled();
+
+      // The user confirms the slides as they are; nothing about them changes.
+      expect(await acceptInterruptedSlides("c1")).toBe(true);
+      exportAllSlidesMock.mockResolvedValue(await renderedPngs("4:5", 1));
+      expect((await exportRequest()).status).toBe(200);
+    });
+  }
+
+  it("exports normally after an interrupted run that changed nothing", async () => {
+    getCarouselMock.mockResolvedValue(carousel("4:5", 1));
+    exportAllSlidesMock.mockResolvedValue(await renderedPngs("4:5", 1));
+    await beginGeneration("c1", "")("stopped");
+
+    expect((await exportRequest()).status).toBe(200);
   });
 });
 

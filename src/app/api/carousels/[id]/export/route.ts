@@ -6,8 +6,11 @@ import { buildSlidesPdf, PdfExportError } from "@/lib/export-pdf";
 import { parseExportFormat } from "@/lib/export-formats";
 import {
   GENERATION_IN_PROGRESS_ERROR,
+  getInterruption,
+  interruptedExportError,
   isGenerating,
 } from "@/lib/generation-status";
+import { dataErrorResponse } from "@/lib/api-errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +45,27 @@ export async function POST(
   if (isGenerating(carousel.id)) {
     return NextResponse.json(
       { error: GENERATION_IN_PROGRESS_ERROR },
+      { status: 409 }
+    );
+  }
+
+  // A run that was stopped, failed or timed out after changing slides may have
+  // left the carousel half-made. Its slides are kept, but they are not
+  // exported as though they were finished until the user confirms them.
+  let interruption;
+  try {
+    interruption = await getInterruption(carousel.id);
+  } catch (err) {
+    const dataError = dataErrorResponse(err);
+    if (dataError) return dataError;
+    throw err;
+  }
+  if (interruption) {
+    return NextResponse.json(
+      {
+        error: interruptedExportError(interruption.reason),
+        interrupted: interruption,
+      },
       { status: 409 }
     );
   }

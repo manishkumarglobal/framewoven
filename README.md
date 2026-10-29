@@ -92,7 +92,9 @@ The agent can also read this app's local data through its API, and it may fetch 
     A PDF larger than LinkedIn's 100 MB limit is refused with a message saying what to change.
 
   While the design agent is still creating or changing slides, the Export button reads **Waiting for slides…** and is unavailable, so a download never captures a half-finished carousel.
-  It becomes available again as soon as the agent finishes, fails or is stopped, including after a page reload.
+  Every open editor tab notices within a couple of seconds, including one left open before the generation started.
+  When the agent finishes, Export opens as usual.
+  When it was stopped (the Stop button, a page reload, a closed tab), failed or timed out after changing slides, every slide it saved is kept, but the Export button reads **Incomplete**: export the slides only after confirming them with **Use these slides**, or ask the agent to continue and export once it finishes.
 
   If an export fails, the editor tells you what went wrong.
 

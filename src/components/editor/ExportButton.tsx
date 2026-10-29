@@ -14,7 +14,6 @@ import {
   ChevronDown,
   Hourglass,
   Info,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,6 +25,9 @@ import {
   type ExportFormatOption,
 } from "@/lib/export-formats";
 import type { AspectRatio } from "@/types/carousel";
+import type { Interruption } from "@/lib/generation-status";
+import { InterruptedExportNotice } from "./InterruptedExportNotice";
+import { ExportErrorCard } from "./ExportErrorCard";
 
 interface ExportButtonProps {
   carouselId: string;
@@ -37,6 +39,13 @@ interface ExportButtonProps {
    * carousel.
    */
   generating?: boolean;
+  /**
+   * Set when the last generation stopped, failed or timed out after changing
+   * slides. The export choices are then replaced by a notice until the user
+   * confirms the slides through `onAcceptInterrupted` or a later run completes.
+   */
+  interrupted?: Interruption | null;
+  onAcceptInterrupted?: () => Promise<void>;
 }
 
 const GENERATING_HINT =
@@ -65,6 +74,8 @@ export function ExportButton({
   slideCount,
   aspectRatio,
   generating = false,
+  interrupted = null,
+  onAcceptInterrupted,
 }: ExportButtonProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
@@ -86,7 +97,7 @@ export function ExportButton({
   useEffect(() => {
     if (!menuOpen) return;
     menuRef.current
-      ?.querySelector<HTMLButtonElement>('[role="menuitem"]')
+      ?.querySelector<HTMLButtonElement>('[role="menuitem"], button')
       ?.focus();
 
     const onPointerDown = (event: MouseEvent) => {
@@ -127,7 +138,7 @@ export function ExportButton({
 
   const handleExport = async (option: ExportFormatOption) => {
     setMenuOpen(false);
-    if (disabled) return;
+    if (disabled || interrupted) return;
     setExporting(option.format);
     setDone(false);
     setError(null);
@@ -187,9 +198,15 @@ export function ExportButton({
         disabled={disabled}
         variant="accent"
         size="sm"
-        aria-haspopup="menu"
+        aria-haspopup={interrupted ? "dialog" : "menu"}
         aria-expanded={menuOpen}
-        aria-label={generating ? `Export unavailable. ${GENERATING_HINT}` : undefined}
+        aria-label={
+          generating
+            ? `Export unavailable. ${GENERATING_HINT}`
+            : interrupted
+              ? "Export: the last generation did not finish"
+              : undefined
+        }
       >
         <span
           key={
@@ -216,6 +233,12 @@ export function ExportButton({
               <Hourglass className="h-4 w-4" />
               <span>Waiting for slides…</span>
             </>
+          ) : interrupted ? (
+            <>
+              <AlertTriangle className="h-4 w-4" />
+              <span>Incomplete</span>
+              <ChevronDown className="h-3.5 w-3.5 -ml-1" />
+            </>
           ) : done ? (
             <>
               <Check className="h-4 w-4" />
@@ -231,7 +254,22 @@ export function ExportButton({
         </span>
       </Button>
 
-      {menuOpen && (
+      {menuOpen && interrupted && (
+        <div
+          ref={menuRef}
+          className="oc-enter-pop absolute right-0 top-full mt-2 z-30 w-80 rounded-lg border border-border bg-surface p-1 shadow-lg"
+        >
+          <InterruptedExportNotice
+            reason={interrupted.reason}
+            slideCount={slideCount}
+            onAccept={async () => {
+              await onAcceptInterrupted?.();
+            }}
+          />
+        </div>
+      )}
+
+      {menuOpen && !interrupted && (
         <div
           ref={menuRef}
           role="menu"
@@ -276,29 +314,7 @@ export function ExportButton({
       )}
 
       {error && (
-        <div
-          role="alert"
-          className="oc-enter-pop absolute right-0 top-full mt-2 z-30 w-80 rounded-lg border border-destructive/30 bg-surface p-3 shadow-lg"
-        >
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-destructive">
-                Export failed
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 break-words">
-                {error}
-              </p>
-            </div>
-            <button
-              onClick={() => setError(null)}
-              className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
-              aria-label="Dismiss export error"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
+        <ExportErrorCard message={error} onDismiss={() => setError(null)} />
       )}
     </div>
   );
