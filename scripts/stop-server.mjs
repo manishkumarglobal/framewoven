@@ -32,8 +32,15 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-/** `next dev`, `next start`, or the `next-server (vX)` process that listens. */
-const NEXT_SERVER_COMMAND = /(^|[\s/])next(-server)?(\s|$)/;
+/**
+ * The program itself, never its arguments: the `next-server (vX)` process that
+ * holds the socket, or `node …/next dev|start`. Anchored at the start because
+ * an argument can contain anything; the design agent runs as `claude -p
+ * "<the user's message>"` from this checkout, and a message such as "move the
+ * CTA to the next slide" must not make it look like a server.
+ */
+const NEXT_SERVER_COMMAND =
+  /^(next-server(\s|$)|\S*\bnode(\.exe)?\s+\S*[\\/]next\s+(dev|start)(\s|$))/;
 
 const STOP_TIMEOUT_MS = 10_000;
 
@@ -97,7 +104,9 @@ export function parseProcNetTcp(text) {
 
 function realDir(dir) {
   try {
-    return fs.realpathSync(dir);
+    // The native call also returns the on-disk letter case, which matters on
+    // macOS, where /Users/me/Framewoven and /Users/me/framewoven are one folder.
+    return fs.realpathSync.native(dir);
   } catch {
     return null;
   }
@@ -112,7 +121,7 @@ export const lsofProbe = {
     return parseLsofListeners(run("lsof", ["-nP", "-iTCP", "-sTCP:LISTEN", "-Fpn"]));
   },
   processInfo(pid) {
-    const ps = parsePsLine(run("ps", ["-o", "uid=", "-o", "command=", "-p", String(pid)]));
+    const ps = parsePsLine(run("ps", ["-ww", "-o", "uid=", "-o", "command=", "-p", String(pid)]));
     if (!ps) return null;
     const cwd = parseLsofCwd(run("lsof", ["-a", "-p", String(pid), "-d", "cwd", "-Fn"]));
     return { ...ps, cwd: cwd && realDir(cwd) };
@@ -207,7 +216,7 @@ export function planStop({ root, uid, port, listeners }) {
   if (port !== undefined) {
     const onPort = seen.filter((l) => l.port === port && l.kind !== "gone");
     if (onPort.length === 0) {
-      return { action: "none", message: `Nothing is listening on :${port}.` };
+      return { action: "none", message: `No process of yours is listening on :${port}.` };
     }
     const ours = onPort.filter((l) => l.kind === "ours");
     const others = onPort.filter((l) => l.kind !== "ours");
@@ -321,8 +330,15 @@ export async function main({
   // Check each process again right before signalling it, so a PID that has
   // exited, or been reused by something else since it was listed, is never hit.
   const signalled = [];
+  let exitedMeanwhile = 0;
   for (const pid of plan.pids) {
-    if (classify(probe.processInfo(pid), { root: realRoot, uid }) !== "ours") {
+    const now = classify(probe.processInfo(pid), { root: realRoot, uid });
+    if (now === "gone") {
+      log(`The server with PID ${pid} has already exited.`);
+      exitedMeanwhile++;
+      continue;
+    }
+    if (now !== "ours") {
       log(`PID ${pid} is no longer this checkout's server; left alone.`);
       continue;
     }
@@ -333,7 +349,7 @@ export async function main({
       log(`Could not stop PID ${pid}: ${err?.message ?? err}`);
     }
   }
-  if (signalled.length === 0) return 1;
+  if (signalled.length === 0) return exitedMeanwhile === plan.pids.length ? 0 : 1;
 
   const deadline = Date.now() + timeoutMs;
   while (signalled.some(alive) && Date.now() < deadline) {

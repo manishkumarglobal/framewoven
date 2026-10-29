@@ -110,6 +110,11 @@ describe("recognising this checkout's server", () => {
       "node server.js",
       "node /work/my-next-app/server.js",
       "nextcloud",
+      // The design agent, whose arguments carry the user's own words.
+      "/opt/node22/bin/claude -p Move the CTA to the next slide --name framewoven-chat",
+      "node /usr/lib/claude/cli.js -p try node ./node_modules/.bin/next dev here",
+      "/opt/node22/bin/claude -p next-server (v16.2.3)",
+      "node /work/framewoven/node_modules/.bin/next build",
     ]) {
       expect(classify({ ...next(), command }, ctx), command).toBe("unrelated");
     }
@@ -176,7 +181,7 @@ describe("deciding what /stop does", () => {
     const other = plan(3020, [{ pid: 20, port: 3020, info: next(OTHER) }]);
     expect(other.action).toBe("refuse");
     expect(other.message).toMatch(/run \/stop from that checkout/);
-    expect(plan(3030, [])).toMatchObject({ action: "none", message: "Nothing is listening on :3030." });
+    expect(plan(3030, [])).toMatchObject({ action: "none", message: "No process of yours is listening on :3030." });
   });
 
   it("ignores processes that have already exited", () => {
@@ -213,6 +218,13 @@ describe("acting on the decision", () => {
       },
     };
   }
+
+  it("treats a server that exited by itself before the signal as stopped", async () => {
+    const sys = fakeSystem([{ pid: 10, port: 3010 }], [{ 10: next() }, {}]);
+    expect(await main({ ...sys.options, args: [] })).toBe(0);
+    expect(sys.signalled).toEqual([]);
+    expect(sys.lines.join("\n")).toMatch(/has already exited/);
+  });
 
   it("does not signal a PID that was reused by another process after listing", async () => {
     const reused = { uid: UID, command: "python3 -m http.server", cwd: "/elsewhere" };
@@ -277,11 +289,16 @@ process.on("SIGTERM", () => process.exit(0));
     await rm(base, { recursive: true, force: true });
   });
 
-  async function start(bin: string, cwd: string): Promise<{ pid: number; port: number; child: ChildProcess }> {
-    const child = spawn(process.execPath, [bin, "dev"], { cwd, stdio: ["ignore", "pipe", "inherit"] });
+  async function start(
+    bin: string,
+    cwd: string,
+    args = ["dev"]
+  ): Promise<{ pid: number; port: number; child: ChildProcess }> {
+    const child = spawn(process.execPath, [bin, ...args], { cwd, stdio: ["ignore", "pipe", "inherit"] });
     children.push(child);
     const port = await new Promise<number>((resolve, reject) => {
       child.once("error", reject);
+      child.once("exit", (code) => reject(new Error(`Test server exited early (${code})`)));
       child.stdout!.once("data", (chunk: Buffer) => resolve(Number(chunk.toString().trim())));
     });
     return { pid: child.pid!, port, child };
@@ -347,6 +364,15 @@ process.on("SIGTERM", () => process.exit(0));
     expect(running(b.child)).toBe(true);
   });
 
+  it("leaves the design agent alone when the user's message mentions next dev", async () => {
+    // Listens from the checkout like the claude CLI does, with user text in its arguments.
+    const agent = await start(otherBin, checkoutA, ["-p", "use", "node", "./next", "dev", "on", "the", "next", "slide"]);
+
+    expect((await stop(checkoutA)).output).toMatch(/^No Framewoven server from this checkout/);
+    expect((await stop(checkoutA, [String(agent.port)])).code).toBe(1);
+    expect(running(agent.child)).toBe(true);
+  });
+
   it("reports a port with nothing on it, and a checkout with no server", async () => {
     const gone = await start(nextBin, checkoutA);
     gone.child.kill("SIGKILL");
@@ -354,7 +380,7 @@ process.on("SIGTERM", () => process.exit(0));
 
     expect(await stop(checkoutA, [String(gone.port)])).toEqual({
       code: 0,
-      output: `Nothing is listening on :${gone.port}.`,
+      output: `No process of yours is listening on :${gone.port}.`,
     });
     expect((await stop(checkoutA)).output).toMatch(/^No Framewoven server from this checkout/);
   });
