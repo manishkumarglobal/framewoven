@@ -247,6 +247,23 @@ describe("single PNG download", () => {
     });
   }
 
+  it("sends exactly the PNG's bytes when it sits inside a larger allocation", async () => {
+    // Node pools small Buffers, so a rendered PNG can be a view at a non-zero
+    // offset into a bigger ArrayBuffer. Only the PNG's own bytes may be sent.
+    const [rendered] = await renderedPngs("1:1", 1);
+    const pool = Buffer.alloc(rendered.buffer.length + 64, 0xab);
+    rendered.buffer.copy(pool, 32);
+    const pooled = pool.subarray(32, 32 + rendered.buffer.length);
+    expect(pooled.byteOffset).toBeGreaterThan(0);
+    getCarouselMock.mockResolvedValue(carousel("1:1", 1));
+    exportAllSlidesMock.mockResolvedValue([{ name: "slide-1.png", buffer: pooled }]);
+
+    const png = Buffer.from(await (await exportRequest("?format=single-png")).arrayBuffer());
+
+    expect(png.length).toBe(rendered.buffer.length);
+    expect(png.equals(rendered.buffer)).toBe(true);
+  });
+
   it("renders through the same renderer as the ZIP, once", async () => {
     const c = carousel("4:5", 1);
     getCarouselMock.mockResolvedValue(c);

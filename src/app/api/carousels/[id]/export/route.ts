@@ -95,7 +95,10 @@ export async function POST(
 
     if (format === "single-png") {
       // The exact bytes the ZIP would hold as slide-1.png, not re-encoded.
-      return new Response(new Uint8Array(pngBuffers[0].buffer), {
+      // `png` is the Node Buffer itself, so the copy covers its own bytes only,
+      // wherever they sit in a pooled allocation.
+      const [{ buffer: png }] = pngBuffers;
+      return new Response(new Uint8Array(png), {
         headers: {
           "Content-Type": "image/png",
           "Content-Disposition": `attachment; filename="${fileBase}.png"`,
