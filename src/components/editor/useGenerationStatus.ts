@@ -20,6 +20,15 @@ export function useServerGeneration(
   streaming: boolean
 ): boolean {
   const [generating, setGenerating] = useState(false);
+  const [wasStreaming, setWasStreaming] = useState(streaming);
+
+  // When this tab's stream closes, the subprocess may still be exiting. Count
+  // it as generating until the server has answered, so export does not open
+  // for the length of that request.
+  if (streaming !== wasStreaming) {
+    setWasStreaming(streaming);
+    if (!streaming) setGenerating(true);
+  }
 
   useEffect(() => {
     if (streaming) return;

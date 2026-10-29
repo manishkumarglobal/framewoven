@@ -14,6 +14,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+/** How long a cancelled Claude CLI gets to exit before it is killed. */
+const FORCE_KILL_AFTER_MS = 5_000;
+
 export async function POST(request: NextRequest) {
   if (!isClaudeAvailable()) {
     return NextResponse.json(
@@ -197,6 +200,13 @@ export async function POST(request: NextRequest) {
           childProcess.signalCode !== null
         ) {
           endGeneration();
+        } else {
+          // Export stays unavailable until the subprocess exits, so one that
+          // ignores the termination request is killed outright.
+          const forceKill = setTimeout(() => {
+            childProcess.kill("SIGKILL");
+          }, FORCE_KILL_AFTER_MS);
+          childProcess.once("exit", () => clearTimeout(forceKill));
         }
         const e = err as NodeJS.ErrnoException;
         console.error("[chat] Claude subprocess error", {

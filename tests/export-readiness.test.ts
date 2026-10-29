@@ -38,6 +38,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 const dir = process.env.FAKE_CLAUDE_DIR;
 writeFileSync(path.join(dir, "pid"), String(process.pid));
+if (existsSync(path.join(dir, "ignore-sigterm"))) process.on("SIGTERM", () => {});
 console.log(JSON.stringify({ type: "system", subtype: "init", session_id: "fake-session" }));
 const finish = path.join(dir, "finish");
 const timer = setInterval(() => {
@@ -94,6 +95,11 @@ beforeEach(async () => {
 afterEach(async () => {
   // Never leave a stand-in CLI running, whatever the test did.
   await finishRun(0).catch(() => {});
+  try {
+    process.kill(Number(await readFile(path.join(fakeDir, "pid"), "utf8")), "SIGKILL");
+  } catch {
+    // Already exited, or never started.
+  }
   process.chdir(originalCwd);
   delete process.env.FAKE_CLAUDE_DIR;
   await rm(workdir, { recursive: true, force: true });
@@ -221,6 +227,24 @@ describe("export while the design agent is generating", () => {
     expect(isAlive(pid)).toBe(false);
     expect((await requestExport(carousel.id)).status).toBe(200);
   });
+
+  it("kills a cancelled CLI that ignores the request to stop, then releases export", async () => {
+    const carousel = await createCarousel("Stubborn run", "4:5");
+    await addSlide(carousel.id, "<div>Cover</div>");
+    await writeFile(path.join(fakeDir, "ignore-sigterm"), "");
+    const res = await startChat(carousel.id);
+    const pid = await fakeCliPid();
+
+    await res.body!.cancel();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Still alive after the termination request, so still generating.
+    expect(isAlive(pid)).toBe(true);
+    expect(isGenerating(carousel.id)).toBe(true);
+
+    await waitFor(() => !isGenerating(carousel.id), 10_000);
+    expect(isAlive(pid)).toBe(false);
+    expect((await requestExport(carousel.id)).status).toBe(200);
+  }, 15_000);
 
   it("never leaves a carousel generating when the CLI cannot be started", async () => {
     const carousel = await createCarousel("No CLI", "4:5");

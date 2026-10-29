@@ -83,7 +83,7 @@ The agent can also read this app's local data through its API, and it may fetch 
 - **Captions and hashtags.**
   Ask the design agent for a caption, and it saves the caption and hashtags to the carousel, where the editor shows them with copy buttons.
 - **Export for Instagram or LinkedIn.**
-  The Export menu renders every slide in headless Chromium at the carousel's exact dimensions and offers two downloads:
+  The Export menu renders every slide in headless Chromium at the carousel's exact dimensions and offers these downloads:
   - **Instagram · PNG ZIP**: one PNG per slide, in a ZIP.
     A carousel with a single slide, such as a reel cover, can also be downloaded as that one PNG with **Instagram · PNG**, no ZIP to extract.
   - **LinkedIn · PDF**: one PDF for a LinkedIn document post, with one page per slide in carousel order.
