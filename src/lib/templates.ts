@@ -1,5 +1,6 @@
 import { readDataSafe, mutateData } from "./data";
 import { generateId, now } from "./utils";
+import { brandIdOf, getDefaultBrandId } from "./brand";
 import type { Template, TemplatesData } from "@/types/template";
 import type { Carousel } from "@/types/carousel";
 
@@ -16,9 +17,15 @@ function mutate<R>(fn: (data: TemplatesData) => R): Promise<R> {
   return mutateData<TemplatesData, R>(FILE, emptyData, fn);
 }
 
-export async function listTemplates(): Promise<Template[]> {
+/**
+ * Lists templates, optionally only those of one brand. Templates saved before
+ * brands existed belong to the default brand.
+ */
+export async function listTemplates(brandId?: string): Promise<Template[]> {
   const data = await load();
-  return data.templates;
+  if (brandId === undefined) return data.templates;
+  const defaultBrandId = await getDefaultBrandId();
+  return data.templates.filter((t) => brandIdOf(t, defaultBrandId) === brandId);
 }
 
 export async function getTemplate(id: string): Promise<Template | null> {
@@ -26,11 +33,16 @@ export async function getTemplate(id: string): Promise<Template | null> {
   return data.templates.find((t) => t.id === id) ?? null;
 }
 
+/**
+ * A template keeps the brand of the carousel it was saved from: its slide HTML
+ * carries that brand's colours, fonts and logo.
+ */
 export async function saveAsTemplate(
   carousel: Carousel,
   name?: string,
   description?: string
 ): Promise<Template> {
+  const brandId = brandIdOf(carousel, await getDefaultBrandId());
   return mutate((data) => {
     const template: Template = {
       id: generateId(),
@@ -44,6 +56,7 @@ export async function saveAsTemplate(
         notes,
       })),
       tags: carousel.tags,
+      brandId,
       createdAt: now(),
     };
     data.templates.push(template);

@@ -1,5 +1,6 @@
 import { readDataSafe, mutateData } from "./data";
 import { generateId, now } from "./utils";
+import { brandIdOf, getDefaultBrandId } from "./brand";
 import type { Carousel, CarouselsData, Slide, AspectRatio, ReferenceImage } from "@/types/carousel";
 import { MAX_SLIDES, MAX_VERSIONS } from "@/types/carousel";
 
@@ -16,9 +17,16 @@ function mutate<R>(fn: (data: CarouselsData) => R): Promise<R> {
   return mutateData<CarouselsData, R>(FILE, emptyData, fn);
 }
 
-export async function listCarousels(): Promise<Carousel[]> {
+/**
+ * Lists carousels, optionally only those of one brand. Carousels made before
+ * brands existed belong to the default brand.
+ */
+export async function listCarousels(brandId?: string): Promise<Carousel[]> {
   const data = await load();
-  return data.carousels.filter((c) => !c.isTemplate);
+  const carousels = data.carousels.filter((c) => !c.isTemplate);
+  if (brandId === undefined) return carousels;
+  const defaultBrandId = await getDefaultBrandId();
+  return carousels.filter((c) => brandIdOf(c, defaultBrandId) === brandId);
 }
 
 export async function getCarousel(id: string): Promise<Carousel | null> {
@@ -26,10 +34,16 @@ export async function getCarousel(id: string): Promise<Carousel | null> {
   return data.carousels.find((c) => c.id === id) ?? null;
 }
 
+/**
+ * `brandId` is stamped here, the default brand when none is given, and no
+ * update can move a carousel to another brand afterwards.
+ */
 export async function createCarousel(
   name: string,
-  aspectRatio: AspectRatio
+  aspectRatio: AspectRatio,
+  brandId?: string
 ): Promise<Carousel> {
+  const owner = brandId ?? (await getDefaultBrandId());
   return mutate((data) => {
     const carousel: Carousel = {
       id: generateId(),
@@ -38,6 +52,7 @@ export async function createCarousel(
       slides: [],
       referenceImages: [],
       chatSessionId: null,
+      brandId: owner,
       isTemplate: false,
       tags: [],
       createdAt: now(),

@@ -3,9 +3,11 @@ import { listTemplates, saveAsTemplate } from "@/lib/templates";
 import { getCarousel } from "@/lib/carousels";
 import { dataErrorResponse } from "@/lib/api-errors";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const templates = await listTemplates();
+    // `?brandId=` lists one brand's templates; without it, all of them.
+    const brandId = new URL(request.url).searchParams.get("brandId") ?? undefined;
+    const templates = await listTemplates(brandId);
     return NextResponse.json({ templates });
   } catch (err) {
     const dataError = dataErrorResponse(err);

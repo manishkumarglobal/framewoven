@@ -25,6 +25,11 @@ export interface Carousel {
   caption?: string;
   hashtags?: string[];
   chatSessionId: string | null;
+  /**
+   * The brand this carousel was created in. Fixed at creation. Carousels made
+   * before brands existed have none and belong to the default brand.
+   */
+  brandId?: string;
   isTemplate: boolean;
   tags: string[];
   createdAt: string;

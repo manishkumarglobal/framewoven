@@ -11,6 +11,8 @@ interface TopBarProps {
   editable?: boolean;
   onTitleChange?: (newTitle: string) => void;
   onSettingsClick?: () => void;
+  /** Shown after the title, for read-only context such as the carousel's brand. */
+  children?: React.ReactNode;
 }
 
 export function TopBar({
@@ -19,6 +21,7 @@ export function TopBar({
   editable,
   onTitleChange,
   onSettingsClick,
+  children,
 }: TopBarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -79,6 +82,7 @@ export function TopBar({
           </span>
         )}
       </div>
+      {children}
       <div className="flex-1" />
       {onSettingsClick && (
         <Button
