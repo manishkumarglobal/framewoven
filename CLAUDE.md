@@ -71,3 +71,13 @@ Slides store body-level HTML only (no `<html>`, `<head>`, `<!DOCTYPE>`). The `wr
 - Use Google Font family names in font-family declarations
 - NOT contain `<script>` tags (enforced by iframe sandbox)
 - Target the carousel's aspect ratio dimensions
+
+## GitHub governance and ticket validation
+
+- Canonical repository: `mk-global/framewoven`. Public-repository exception: do not add EngineeringToolsMK's private-runner workflows or invoke normal repository onboarding here.
+- Every material change starts with an OPEN GitHub issue **before implementation**, validated using EngineeringToolsMK `tools/github-policy/validate.py ticket`. Before creating a PR validate each linked issue with `linked-ticket`, and validate the PR body with `pr`. Do not copy or reimplement the validator.
+- Required ticket headings: Problem; Desired Outcome; Scope; Out of Scope; Acceptance Criteria; Verification; Dependencies / Blockers; Risks / Constraints. Acceptance Criteria requires a list item. Replace template comments with real text.
+- Required PR headings: GitHub Issue (with `Closes #N`); Objective; Scope; Acceptance Criteria; Verification Evidence; Risk Assessment; Rollback; Decisions / Deviations. Acceptance Criteria requires a list item.
+- GitHub issue and PR templates guide web contributors but are **advisory**, and cloud/API creation bypasses them. Validate drafted bodies before publishing.
+- Hard merge gate is the local reviewer (App 4577329, `local-ai/pr-review/main`, `scope: required`) plus GitHub-hosted CI. An invalid linked ticket silently prevents reviewer admission; if a PR has no reviewer check, validate its linked ticket bodies first.
+- Read `docs/MAINTAINING.md` for concrete commands, workflow boundaries and the limitations tracked under issue #24.
