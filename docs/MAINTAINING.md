@@ -25,7 +25,7 @@ The rename is a staged cutover with one owner; GitHub's redirects from the old n
 
 Until the rename, these keep `framewoven` on purpose:
 
-- every `mk-global/framewoven` URL in this repository, including `package.json`, the README and this guide;
+- every `mk-global/framewoven` URL in this repository, including `package.json`, the README and this guide, and the `framewoven` checkout directory that the README's clone instructions and project tree show;
 - the provisioned image-service token at `~/.config/framewoven/image-service.token`, which moves only in a founder-coordinated migration together with the path in `src/lib/image-service.ts`.
 
 These keep the former name permanently, because nobody sees them and renaming them has a cost: the dashboard's browser-storage key for the selected brand (renaming resets every saved selection) and the server's generation-status registry key (renaming loses generations in progress in a server that reloads).
@@ -40,11 +40,11 @@ Outside this repository, these name `mk-global/framewoven` exactly, and each cha
 
 The GitHub App installation and ruleset `25942669` are bound to the repository's ID rather than its name, so they carry over; check them anyway.
 
-Order of the cutover:
+The recommended order of the cutover follows; the EngineeringToolsMK steps are that repository's decisions, through its own review:
 
 1. Merge the branding pull request.
 2. Admit `mk-global/creatorbrio` to the broker policy, inventory and reviewer configuration in EngineeringToolsMK, keeping `mk-global/framewoven` until step 6, and restart the broker, which reads its policy only when it starts.
-   The broker matches a checkout's `origin` against its policy, so a checkout pointed at a name the policy does not list loses GitHub access.
+   This comes first because the broker matches a checkout's `origin` against its policy, so a checkout pointed at a name the policy does not list loses GitHub access.
 3. Rename the repository in GitHub's settings.
 4. Point every checkout and worktree at the new name with `git remote set-url origin https://github.com/mk-global/creatorbrio.git`.
 5. Verify App and broker read and write access, the ticket and PR validators, the required CI check, an exact-head independent review on a pull request, and the ruleset's required checks.
