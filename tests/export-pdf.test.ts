@@ -238,7 +238,7 @@ describe("buildSlidesPdf", () => {
   it("uses LinkedIn's document limits by default", async () => {
     expect(LINKEDIN_MAX_PDF_BYTES).toBe(100_000_000);
     expect(LINKEDIN_MAX_PDF_PAGES).toBe(300);
-    // Framewoven's own slide limit sits well inside LinkedIn's page limit.
+    // CreatorBrio's own slide limit sits well inside LinkedIn's page limit.
     expect(MAX_SLIDES).toBeLessThanOrEqual(LINKEDIN_MAX_PDF_PAGES);
 
     const tooMany = Array.from(

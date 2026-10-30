@@ -31,8 +31,8 @@ const port = process.argv[2] || process.env.PORT || "3000";
 // Keep the POSIX path predictable and easy to tail; fall back to the platform
 // temp directory on Windows, where /tmp does not exist.
 const defaultLog = IS_WIN
-  ? path.join(os.tmpdir(), "framewoven-dev.log")
-  : "/tmp/framewoven-dev.log";
+  ? path.join(os.tmpdir(), "creatorbrio-dev.log")
+  : "/tmp/creatorbrio-dev.log";
 const logPath = process.argv[3] || defaultLog;
 
 // Truncates if present, creates if not - no shell involved, so `noclobber`

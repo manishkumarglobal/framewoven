@@ -1,5 +1,5 @@
 ---
-description: Stop this checkout's Framewoven server, on whatever port it runs (accepts a port arg).
+description: Stop this checkout's CreatorBrio server, on whatever port it runs (accepts a port arg).
 argument-hint: [port]
 allowed-tools: Bash(node *)
 ---
@@ -14,7 +14,7 @@ node scripts/stop-server.mjs "$ARGUMENTS"
 
 Report the script's output to the user as it is. It is already short.
 
-The script decides what to stop. Without a port it finds the Framewoven server
+The script decides what to stop. Without a port it finds the CreatorBrio server
 running from this checkout, whatever its port. With a port it stops that port's
 server only if it is this checkout's. A server qualifies only if it belongs to
 the current user, is a Next.js server process, and runs from this checkout's

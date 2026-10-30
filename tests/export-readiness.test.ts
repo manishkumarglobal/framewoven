@@ -67,7 +67,7 @@ let fakeDir: string;
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-export-readiness-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-export-readiness-"));
   await mkdir(path.join(workdir, "data"), { recursive: true });
   await writeFile(path.join(workdir, "data", "brand.json"), JSON.stringify(BRAND));
   fakeDir = path.join(workdir, "fake-claude");

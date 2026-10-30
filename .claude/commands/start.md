@@ -1,10 +1,10 @@
 ---
-description: Bootstrap Framewoven - run setup, launch dev server, open browser.
+description: Bootstrap CreatorBrio - run setup, launch dev server, open browser.
 argument-hint: [port]
 allowed-tools: Bash(node *), Bash(uname *), Bash(test *), Bash(lsof *), Bash(kill *), Bash(curl *), Bash(open *), Bash(xdg-open *), Bash(cmd.exe *), Bash(npm *), Bash(tail *), AskUserQuestion
 ---
 
-You are bootstrapping Framewoven for the user. Be terse — short status updates only, no preamble.
+You are bootstrapping CreatorBrio for the user. Be terse — short status updates only, no preamble.
 
 ## Snapshot (these run before you see this prompt)
 
@@ -27,8 +27,9 @@ User-supplied port (optional): $ARGUMENTS
    - Run `OC_SETUP_NO_DEV=1 npm run setup` with a 600s timeout. The env var tells the setup script to skip its own dev-server start (`/start` manages the server itself in step 5). On Windows PowerShell use `$env:OC_SETUP_NO_DEV=1; npm run setup`; on cmd.exe use `set OC_SETUP_NO_DEV=1 && npm run setup`.
    - On failure, surface the error and stop.
 
-4. **Handle port collision.** If `<port>` is in use, first check whether it is already Framewoven:
-   `curl -s http://localhost:<port> | grep -q "Framewoven"`.
+4. **Handle port collision.** If `<port>` is in use, first check whether it is already CreatorBrio (named CreatorBrio before #29, which an
+   instance that has not reloaded since may still show):
+   `curl -s http://localhost:<port> | grep -qE "CreatorBrio|CreatorBrio"`.
    - If it is, the server is already up. Skip to step 7 and report normally. Do not
      restart it and do not ask the user anything.
    - Otherwise ask via AskUserQuestion: "Port `<port>` is in use. Kill the existing process or pick a different port?" Options: Kill / Different port / Cancel.
@@ -62,7 +63,7 @@ User-supplied port (optional): $ARGUMENTS
    - Windows / MINGW / CYGWIN → `cmd.exe /c start http://localhost:<port>`
 
 8. **Report ready** in two lines (no more):
-   > Framewoven is running at http://localhost:`<port>`.
+   > CreatorBrio is running at http://localhost:`<port>`.
    > Logs: `tail -f <logfile>` • Stop with `/stop`
 
-Idempotency note: re-running `/start` on a healthy install is fast — the setup script skips already-installed deps and already-seeded data, and step 4 skips the launch entirely when Framewoven is already serving on `<port>`. The dev server outlives the session that started it, so a previously started server is normally still running.
+Idempotency note: re-running `/start` on a healthy install is fast — the setup script skips already-installed deps and already-seeded data, and step 4 skips the launch entirely when CreatorBrio is already serving on `<port>`. The dev server outlives the session that started it, so a previously started server is normally still running.

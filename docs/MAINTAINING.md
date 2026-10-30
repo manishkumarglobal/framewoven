@@ -1,6 +1,6 @@
-# Maintaining Framewoven
+# Maintaining CreatorBrio
 
-This document describes how Framewoven is developed, reviewed, and released.
+This document describes how CreatorBrio is developed, reviewed, and released.
 
 ## Canonical repository
 
@@ -15,8 +15,40 @@ git remote -v
 # origin  https://github.com/mk-global/framewoven.git (push)
 ```
 
-Framewoven does not keep an `upstream` remote and does not routinely synchronize with any other repository.
+CreatorBrio does not keep an `upstream` remote and does not routinely synchronize with any other repository.
 Where the code came from is recorded in [`PROVENANCE.md`](./PROVENANCE.md), not in remote configuration.
+
+### Renaming the repository to `mk-global/creatorbrio`
+
+The product is named CreatorBrio (#29), and the repository keeps the name `framewoven` until the founder renames it after that change merges.
+The rename is a staged cutover with one owner; GitHub's redirects from the old name are a convenience, never configuration.
+
+Until the rename, these keep `framewoven` on purpose:
+
+- every `mk-global/framewoven` URL in this repository, including `package.json`, the README and this guide;
+- the provisioned image-service token at `~/.config/framewoven/image-service.token`, which moves only in a founder-coordinated migration together with the path in `src/lib/image-service.ts`.
+
+These keep the former name permanently, because nobody sees them and renaming them has a cost: the dashboard's browser-storage key for the selected brand (renaming resets every saved selection) and the server's generation-status registry key (renaming loses generations in progress in a server that reloads).
+The changelog and `PROVENANCE.md` keep the name used at the time.
+
+Outside this repository, these name `mk-global/framewoven` exactly, and each changes only through a reviewed EngineeringToolsMK pull request:
+
+- `tools/mk-github/broker/broker-policy.json` and the App allowlist in `tools/repo-onboarding/inventory.json`;
+- the public-repository exception and its reviewer gate in `tools/repo-onboarding/inventory.json`;
+- the watched repositories and required ticket scope in `tools/local-pr-reviewer/config/reviewer.yaml`;
+- the tests and documents that assert or describe those entries, and the image-service README's token instructions.
+
+The GitHub App installation and ruleset `25942669` are bound to the repository's ID rather than its name, so they carry over; check them anyway.
+
+Order of the cutover:
+
+1. Merge the branding pull request.
+2. Admit `mk-global/creatorbrio` to the broker policy, inventory and reviewer configuration in EngineeringToolsMK, keeping `mk-global/framewoven` until step 6, and restart the broker, which reads its policy only when it starts.
+   The broker matches a checkout's `origin` against its policy, so a checkout pointed at a name the policy does not list loses GitHub access.
+3. Rename the repository in GitHub's settings.
+4. Point every checkout and worktree at the new name with `git remote set-url origin https://github.com/mk-global/creatorbrio.git`.
+5. Verify App and broker read and write access, the ticket and PR validators, the required CI check, an exact-head independent review on a pull request, and the ruleset's required checks.
+6. Remove `mk-global/framewoven` from the EngineeringToolsMK configuration, and update this repository's URLs and this section in a follow-up pull request.
 
 ## No ticket, no work
 
@@ -25,7 +57,7 @@ Every change that reaches a protected PR must close at least one OPEN, admitted 
 
 ## Ticket and PR admission — public repository
 
-Framewoven is an explicit public-repository exception in EngineeringToolsMK's `tools/repo-onboarding/inventory.json` (decision #234). CI uses GitHub-hosted runners. **Do not** add private self-hosted governance workflows, admit this repository to the private runner group, or run ordinary `onboard.py onboard/verify` against it. EngineeringToolsMK's organisation `onboard.py audit` verifies this exception.
+CreatorBrio is an explicit public-repository exception in EngineeringToolsMK's `tools/repo-onboarding/inventory.json` (decision #234). CI uses GitHub-hosted runners. **Do not** add private self-hosted governance workflows, admit this repository to the private runner group, or run ordinary `onboard.py onboard/verify` against it. EngineeringToolsMK's organisation `onboard.py audit` verifies this exception.
 
 The canonical policy lives in private `mk-global/EngineeringToolsMK/tools/github-policy/validate.py` (`github-policy/v2.0.0`). Every linked engineering issue must be OPEN and contain non-empty Markdown sections with exactly these headings:
 
@@ -55,7 +87,7 @@ For draft bodies not yet published, save the proposed Markdown to a temporary fi
 
 **Reviewer infrastructure failures are different from ticket refusal.** A PR-scoped status such as `local-ai/pr-review/pr-<number>` with `containment_unverified` means the reviewer could not verify its own sandbox/tools and refused to run; this is **not** a code-review verdict. Do not modify application code, fake a PASS, or relax the required branch context to address it. Restore the reviewer through its EngineeringToolsMK operator procedure and verify doctor/isolation. A PR whose infrastructure failures exhausted its retry limit may require a new **substantive** head commit to trigger another review: first check the installed reviewer's supported recovery behavior and preserve the ticket/review requirements.
 
-Creation pathways differ: GitHub web UI uses the advisory templates; browser/cloud Claude or API clients must validate explicitly; local `mk-agent` uses the approved `mk-github` broker and should also validate before publication. Enforcement at client write-time and an explanatory non-authoritative reviewer status are tracked under Framewoven #24 and require separate reviewed EngineeringToolsMK changes. They are **not** yet active, and this documentation does not implement them.
+Creation pathways differ: GitHub web UI uses the advisory templates; browser/cloud Claude or API clients must validate explicitly; local `mk-agent` uses the approved `mk-github` broker and should also validate before publication. Enforcement at client write-time and an explanatory non-authoritative reviewer status are tracked under CreatorBrio #24 and require separate reviewed EngineeringToolsMK changes. They are **not** yet active, and this documentation does not implement them.
 
 ## Branches
 
@@ -91,11 +123,11 @@ Do not disable or weaken existing tests to make a change pass.
 ## Changelog
 
 Every pull request that changes behavior adds an entry under `[Unreleased]` in [`CHANGELOG.md`](../CHANGELOG.md), following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-Write entries for the people who use Framewoven: what changed for them and why it matters.
+Write entries for the people who use CreatorBrio: what changed for them and why it matters.
 
 ## Releases
 
-Framewoven uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and continues the version line inherited from the maintained fork.
+CreatorBrio uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and continues the version line inherited from the maintained fork.
 Historical tags are never moved or deleted.
 
 1. Open an Issue for the release and a `chore/release-vX.Y.Z` branch.
@@ -127,6 +159,6 @@ Record anything adopted this way in the changelog and, where it affects origin o
 
 ## Roadmap
 
-Framewoven owns its roadmap.
+CreatorBrio owns its roadmap.
 Planned capabilities are listed in the README and get a tracked Issue when work on them is scheduled.
 They are described as shipped only after they are released.

@@ -2,6 +2,9 @@
 
 This document records where Framewoven's source code comes from, under what license it is distributed, and how its history relates to the projects it was derived from.
 
+The product was named Framewoven until 2026-10-30, when it was renamed CreatorBrio (#29).
+This document keeps the name the product had when each recorded event happened.
+
 ## Summary
 
 Framewoven is an independently maintained product.
@@ -93,3 +96,4 @@ See [`MAINTAINING.md`](./MAINTAINING.md).
 
 From 2026-10-27, Framewoven is developed, versioned, and released independently in https://github.com/manishkumarglobal/framewoven.
 The maintained fork is retained as a historical reference.
+The canonical repository later moved to https://github.com/mk-global/framewoven; [`MAINTAINING.md`](./MAINTAINING.md) records its current location.

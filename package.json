@@ -1,5 +1,5 @@
 {
-  "name": "framewoven",
+  "name": "creatorbrio",
   "version": "0.1.3",
   "description": "An AI-powered creative studio for branded social content. Chat with Claude to design Instagram carousels; export PNGs at exact Instagram dimensions.",
   "license": "MIT",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/manishkumarglobal/framewoven"
+    "url": "https://github.com/mk-global/framewoven"
   },
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -54,8 +54,8 @@
     "typescript": "^5",
     "vitest": "^4.1.11"
   },
-  "homepage": "https://github.com/manishkumarglobal/framewoven",
+  "homepage": "https://github.com/mk-global/framewoven",
   "bugs": {
-    "url": "https://github.com/manishkumarglobal/framewoven/issues"
+    "url": "https://github.com/mk-global/framewoven/issues"
   }
 }

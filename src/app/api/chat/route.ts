@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     "--max-budget-usd",
     "1.00",
     "--name",
-    "framewoven-chat",
+    "creatorbrio-chat",
   ];
 
   if (sessionId) {

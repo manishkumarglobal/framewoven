@@ -34,7 +34,7 @@ let workdir: string;
 let originalCwd: string;
 beforeAll(async () => {
   originalCwd = process.cwd();
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-export-route-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-export-route-"));
   process.chdir(workdir);
 });
 afterAll(async () => {
@@ -194,7 +194,7 @@ describe("LinkedIn PDF export", () => {
     "refuses a PDF above LinkedIn's 100 MB limit with an actionable error",
     async () => {
       // 20 story slides of incompressible detail is the largest carousel
-      // Framewoven allows, and it does not fit in a LinkedIn document.
+      // CreatorBrio allows, and it does not fit in a LinkedIn document.
       const noise = await detailedSlidePng(1080, 1920, 11);
       getCarouselMock.mockResolvedValue(carousel("9:16", 20));
       exportAllSlidesMock.mockResolvedValue(

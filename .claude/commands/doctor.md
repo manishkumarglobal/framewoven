@@ -1,5 +1,5 @@
 ---
-description: Diagnose Framewoven setup problems (Node, Claude CLI, deps, data, port).
+description: Diagnose CreatorBrio setup problems (Node, Claude CLI, deps, data, port).
 allowed-tools: Bash(node *)
 ---
 

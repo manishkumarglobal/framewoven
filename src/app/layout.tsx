@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Framewoven - AI Creative Studio",
+  title: "CreatorBrio - AI Creative Studio",
   description:
     "A local-first, AI-assisted creative studio for branded social content. Design Instagram carousels by chatting with Claude.",
 };

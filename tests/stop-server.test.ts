@@ -16,8 +16,8 @@ import {
   procProbe,
 } from "../scripts/stop-server.mjs";
 
-const ROOT = "/work/framewoven";
-const OTHER = "/work/framewoven-feature";
+const ROOT = "/work/creatorbrio";
+const OTHER = "/work/creatorbrio-feature";
 const UID = 501;
 
 const next = (cwd = ROOT, uid = UID) => ({ uid, command: "next-server (v16.2.3)", cwd });
@@ -61,7 +61,7 @@ describe("parsing what the system reports", () => {
       command: "next-server (v16.2.3)",
     });
     expect(parsePsLine("")).toBeNull();
-    expect(parseLsofCwd("p812\nfcwd\nn/Users/me/framewoven\n")).toBe("/Users/me/framewoven");
+    expect(parseLsofCwd("p812\nfcwd\nn/Users/me/creatorbrio\n")).toBe("/Users/me/creatorbrio");
     expect(parseLsofCwd("")).toBeNull();
   });
 
@@ -93,8 +93,8 @@ describe("recognising this checkout's server", () => {
 
   it("needs the same user, a Next.js server command and this checkout's directory", () => {
     expect(classify(next(), ctx)).toBe("ours");
-    expect(classify({ ...next(), command: "node /work/framewoven/node_modules/.bin/next dev -H 127.0.0.1" }, ctx)).toBe("ours");
-    expect(classify({ ...next(), command: "node /work/framewoven/node_modules/next/dist/bin/next start" }, ctx)).toBe("ours");
+    expect(classify({ ...next(), command: "node /work/creatorbrio/node_modules/.bin/next dev -H 127.0.0.1" }, ctx)).toBe("ours");
+    expect(classify({ ...next(), command: "node /work/creatorbrio/node_modules/next/dist/bin/next start" }, ctx)).toBe("ours");
     expect(classify(next(OTHER), ctx)).toBe("other-checkout");
     expect(classify(next(ROOT, 502), ctx)).toBe("unrelated");
     expect(classify(null, ctx)).toBe("gone");
@@ -111,10 +111,10 @@ describe("recognising this checkout's server", () => {
       "node /work/my-next-app/server.js",
       "nextcloud",
       // The design agent, whose arguments carry the user's own words.
-      "/opt/node22/bin/claude -p Move the CTA to the next slide --name framewoven-chat",
+      "/opt/node22/bin/claude -p Move the CTA to the next slide --name creatorbrio-chat",
       "node /usr/lib/claude/cli.js -p try node ./node_modules/.bin/next dev here",
       "/opt/node22/bin/claude -p next-server (v16.2.3)",
-      "node /work/framewoven/node_modules/.bin/next build",
+      "node /work/creatorbrio/node_modules/.bin/next build",
     ]) {
       expect(classify({ ...next(), command }, ctx), command).toBe("unrelated");
     }
@@ -138,7 +138,7 @@ describe("deciding what /stop does", () => {
     expect(plan(undefined, listeners)).toMatchObject({ action: "stop", pids: [10] });
     const explicit = plan(3000, listeners.filter((l) => l.port === 3000));
     expect(explicit.action).toBe("refuse");
-    expect(explicit.message).toMatch(/not served by this checkout's Framewoven server/);
+    expect(explicit.message).toMatch(/not served by this checkout's CreatorBrio server/);
     expect(explicit.message).toContain("python3 -m http.server 3000");
   });
 
@@ -149,7 +149,7 @@ describe("deciding what /stop does", () => {
     ];
     const result = plan(undefined, listeners);
     expect(result).toMatchObject({ action: "stop", pids: [10], ports: [3010] });
-    expect(result.message).toContain(`Framewoven/Next.js from ${OTHER}`);
+    expect(result.message).toContain(`CreatorBrio/Next.js from ${OTHER}`);
   });
 
   it("reports two servers from the same checkout instead of guessing", () => {
@@ -158,7 +158,7 @@ describe("deciding what /stop does", () => {
       { pid: 11, port: 3011, info: next() },
     ]);
     expect(result.action).toBe("ambiguous");
-    expect(result.message).toMatch(/Found 2 Framewoven servers/);
+    expect(result.message).toMatch(/Found 2 CreatorBrio servers/);
     expect(result.message).toMatch(/:3010 {2}PID 10/);
     expect(result.message).toMatch(/:3011 {2}PID 11/);
     expect(result.message).toMatch(/Run \/stop <port>/);
@@ -269,9 +269,9 @@ process.on("SIGTERM", () => process.exit(0));
 `;
 
   beforeAll(async () => {
-    base = await realpath(await mkdtemp(path.join(tmpdir(), "framewoven-stop-")));
-    checkoutA = path.join(base, "framewoven");
-    checkoutB = path.join(base, "framewoven-worktree");
+    base = await realpath(await mkdtemp(path.join(tmpdir(), "creatorbrio-stop-")));
+    checkoutA = path.join(base, "creatorbrio");
+    checkoutB = path.join(base, "creatorbrio-worktree");
     await mkdir(path.join(base, "bin"));
     await mkdir(checkoutA);
     await mkdir(checkoutB);
@@ -325,8 +325,8 @@ process.on("SIGTERM", () => process.exit(0));
     const { code, output } = await stop(checkoutA);
 
     expect(code).toBe(0);
-    expect(output).toContain(`Stopped the Framewoven server on :${a.port} (PID ${a.pid})`);
-    expect(output).toContain(`Framewoven/Next.js from ${checkoutB}`);
+    expect(output).toContain(`Stopped the CreatorBrio server on :${a.port} (PID ${a.pid})`);
+    expect(output).toContain(`CreatorBrio/Next.js from ${checkoutB}`);
     await exited(a.child);
     expect(running(b.child)).toBe(true);
     expect(running(unrelated.child)).toBe(true);
@@ -338,7 +338,7 @@ process.on("SIGTERM", () => process.exit(0));
 
     const ambiguous = await stop(checkoutA);
     expect(ambiguous.code).toBe(1);
-    expect(ambiguous.output).toMatch(/Found 2 Framewoven servers/);
+    expect(ambiguous.output).toMatch(/Found 2 CreatorBrio servers/);
     expect(running(first.child)).toBe(true);
     expect(running(second.child)).toBe(true);
 
@@ -354,7 +354,7 @@ process.on("SIGTERM", () => process.exit(0));
 
     const one = await stop(checkoutA, [String(unrelated.port)]);
     expect(one.code).toBe(1);
-    expect(one.output).toMatch(/not served by this checkout's Framewoven server/);
+    expect(one.output).toMatch(/not served by this checkout's CreatorBrio server/);
 
     const two = await stop(checkoutA, [String(b.port)]);
     expect(two.code).toBe(1);
@@ -368,7 +368,7 @@ process.on("SIGTERM", () => process.exit(0));
     // Listens from the checkout like the claude CLI does, with user text in its arguments.
     const agent = await start(otherBin, checkoutA, ["-p", "use", "node", "./next", "dev", "on", "the", "next", "slide"]);
 
-    expect((await stop(checkoutA)).output).toMatch(/^No Framewoven server from this checkout/);
+    expect((await stop(checkoutA)).output).toMatch(/^No CreatorBrio server from this checkout/);
     expect((await stop(checkoutA, [String(agent.port)])).code).toBe(1);
     expect(running(agent.child)).toBe(true);
   });
@@ -382,6 +382,6 @@ process.on("SIGTERM", () => process.exit(0));
       code: 0,
       output: `No process of yours is listening on :${gone.port}.`,
     });
-    expect((await stop(checkoutA)).output).toMatch(/^No Framewoven server from this checkout/);
+    expect((await stop(checkoutA)).output).toMatch(/^No CreatorBrio server from this checkout/);
   });
 });

@@ -78,7 +78,7 @@ export function TopBar({
             onClick={() => editable && startEditing()}
             title={editable ? "Click to rename" : undefined}
           >
-            {title || "Framewoven"}
+            {title || "CreatorBrio"}
           </span>
         )}
       </div>
