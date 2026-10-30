@@ -163,7 +163,6 @@ describe("POST /api/images/generate", () => {
       return replyPng(full.subarray(0, Math.floor(full.length / 2)));
     }],
     ["a non-PNG content type", async () => replyPng(await png(1024, 1024), "image/jpeg")],
-    ["an oversized response", async () => replyPng(Buffer.alloc(MAX_IMAGE_BYTES + 1))],
     ["an unexpected success status", async () => (_req: IncomingMessage, _b: string, res: ServerResponse) => {
       res.writeHead(204);
       res.end();
@@ -174,6 +173,23 @@ describe("POST /api/images/generate", () => {
     const res = await call({ prompt: "quiet harbour", aspectRatio: "1:1" });
     expect(res.status).toBe(502);
     expect(await res.json()).toMatchObject({ error: "image_generation_failed" });
+    expect(await uploads()).toEqual([]);
+  });
+
+  it.each([
+    ["with a declared length", () => replyPng(Buffer.alloc(MAX_IMAGE_BYTES + 1))],
+    ["with no declared length", (): Handler => (_req, _b, res) => {
+      // Chunked: only the cap applied while reading can stop this one.
+      res.writeHead(200, { "Content-Type": "image/png" });
+      const chunk = Buffer.alloc(1024 * 1024);
+      for (let i = 0; i * chunk.length <= MAX_IMAGE_BYTES; i++) res.write(chunk);
+      res.end();
+    }],
+  ])("refuses an oversized response %s, by its size", async (_name, make) => {
+    handler = make();
+    const res = await call({ prompt: "quiet harbour", aspectRatio: "1:1" });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toMatchObject({ error: "image_generation_failed", message: expect.stringContaining("oversized") });
     expect(await uploads()).toEqual([]);
   });
 

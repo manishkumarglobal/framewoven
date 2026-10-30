@@ -173,7 +173,7 @@ Git tracks only the source; everything you create stays local and is ignored by 
 | `data/staged-actions.json` | Records for an internal API that the UI does not use yet |
 | `data/.font-cache/` | Cached Google Fonts CSS used by export |
 | `public/uploads/` | Uploaded logos and reference images, and generated images |
-| `.env.local` | Local configuration, such as `CLAUDE_CLI_PATH` |
+| `.env.local` | Local configuration, such as `CLAUDE_CLI_PATH`, or `IMAGE_SERVICE_URL` to reach the image service on another loopback port (default `http://127.0.0.1:8791`; any address other than `127.0.0.1` or `localhost` is refused) |
 
 Chat transcripts are stored in your browser's local storage for each carousel.
 Claude Code also keeps its own record of each design-agent session in its data directory, outside this project.
