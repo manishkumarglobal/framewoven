@@ -8,10 +8,18 @@ import { getCarousel } from "@/lib/carousels";
 import { getPreset } from "@/lib/style-presets";
 import { dataErrorResponse } from "@/lib/api-errors";
 import { resolveAppOrigin } from "@/lib/request-origin";
+import {
+  beginGeneration,
+  classifyRunExit,
+  type RunOutcome,
+} from "@/lib/generation-status";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+/** How long a cancelled Claude CLI gets to exit before it is killed. */
+const FORCE_KILL_AFTER_MS = 5_000;
 
 export async function POST(request: NextRequest) {
   if (!isClaudeAvailable()) {
@@ -49,8 +57,12 @@ export async function POST(request: NextRequest) {
 
   // Build dynamic system prompt with the carousel's brand + carousel + style preset context
   let systemPrompt: string;
+  // When the carousel last changed before this run, to tell afterwards whether
+  // the run wrote anything.
+  let baseline: string | null = null;
   try {
     const carousel = carouselId ? await getCarousel(carouselId) : null;
+    baseline = carousel?.updatedAt ?? null;
     // The brand the carousel was created in; the default brand for carousels
     // made before brands existed.
     const brand = await resolveBrandForCarousel(carousel);
@@ -105,6 +117,8 @@ export async function POST(request: NextRequest) {
   }
 
   const encoder = new TextEncoder();
+  // Set by the client going away (Stop, a reload, a closed tab).
+  let cancelled = false;
 
   const stream = new ReadableStream({
     start(controller) {
@@ -144,6 +158,21 @@ export async function POST(request: NextRequest) {
         return;
       }
 
+      // The subprocess is what writes this carousel's slides, so export stays
+      // unavailable until it has exited, however that happens, and how it
+      // ended decides whether the slides count as finished.
+      const endGeneration: (outcome: RunOutcome) => Promise<void> =
+        typeof carouselId === "string" && carouselId
+          ? beginGeneration(carouselId, baseline)
+          : async () => {};
+      let timedOut = false;
+      let resultIsError = false;
+      const outcomeFor = (code: number | null) =>
+        classifyRunExit({ cancelled, timedOut, code, resultIsError });
+      const noteResult = (event: Record<string, unknown>) => {
+        if (event.type === "result" && event.is_error === true) resultIsError = true;
+      };
+
       let buffer = "";
       let resolvedSessionId = sessionId ?? "";
 
@@ -156,6 +185,7 @@ export async function POST(request: NextRequest) {
           if (!line.trim()) continue;
           try {
             const event = JSON.parse(line);
+            noteResult(event);
             handleEvent(event, controller, encoder, (id) => {
               resolvedSessionId = id;
             });
@@ -175,11 +205,30 @@ export async function POST(request: NextRequest) {
 
       // Timeout: kill subprocess after 8 minutes (autonomous mode creates many slides)
       const timeout = setTimeout(() => {
+        timedOut = true;
         childProcess.kill();
       }, 480_000);
 
       childProcess.on("error", (err) => {
         clearTimeout(timeout);
+        // A cancelled chat reports an AbortError as soon as the kill is sent,
+        // while the subprocess may still be finishing a write. Release here
+        // only if it never started or has already gone; otherwise "exit" will.
+        if (childProcess.pid === undefined) {
+          endGeneration("not-started");
+        } else if (
+          childProcess.exitCode !== null ||
+          childProcess.signalCode !== null
+        ) {
+          endGeneration(outcomeFor(childProcess.exitCode));
+        } else {
+          // Export stays unavailable until the subprocess exits, so one that
+          // ignores the termination request is killed outright.
+          const forceKill = setTimeout(() => {
+            childProcess.kill("SIGKILL");
+          }, FORCE_KILL_AFTER_MS);
+          childProcess.once("exit", () => clearTimeout(forceKill));
+        }
         const e = err as NodeJS.ErrnoException;
         console.error("[chat] Claude subprocess error", {
           claudePath,
@@ -209,12 +258,13 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      childProcess.on("exit", (code) => {
+      childProcess.on("exit", async (code) => {
         clearTimeout(timeout);
         // process remaining buffer
         if (buffer.trim()) {
           try {
             const event = JSON.parse(buffer);
+            noteResult(event);
             handleEvent(event, controller, encoder, (id) => {
               resolvedSessionId = id;
             });
@@ -245,6 +295,9 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Saved before "done", so the editor's next status check sees it.
+        await endGeneration(outcomeFor(code));
+
         try {
           controller.enqueue(
             encoder.encode(
@@ -262,6 +315,7 @@ export async function POST(request: NextRequest) {
     },
 
     cancel() {
+      cancelled = true;
       abortController.abort();
     },
   });

@@ -15,6 +15,7 @@ import { AspectRatioSelector } from "@/components/editor/AspectRatioSelector";
 import { ExportButton } from "@/components/editor/ExportButton";
 import { CaptionPanel } from "@/components/editor/CaptionPanel";
 import { FullscreenPreview } from "@/components/editor/FullscreenPreview";
+import { useGenerationStatus } from "@/components/editor/useGenerationStatus";
 import type { Carousel, AspectRatio } from "@/types/carousel";
 
 interface PageProps {
@@ -33,6 +34,11 @@ export default function CarouselEditorPage({ params }: PageProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSafeZones, setShowSafeZones] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
+  // This tab's chat stream, or a run the server reports: started from another
+  // tab, still running after a reload, or settling after the stream closes.
+  // Also whether the last run was interrupted after changing slides.
+  const generation = useGenerationStatus(id, isGenerating);
+  const generationActive = generation.generating;
 
   // Confirm dialog state
   const [confirmState, setConfirmState] = useState<{
@@ -98,12 +104,17 @@ export default function CarouselEditorPage({ params }: PageProps) {
 
   // Poll for carousel updates while AI is generating slides
   useEffect(() => {
-    if (!isGenerating) return;
+    if (!generationActive) return;
     const interval = setInterval(() => {
       fetchCarousel();
     }, 500);
-    return () => clearInterval(interval);
-  }, [isGenerating, fetchCarousel]);
+    return () => {
+      clearInterval(interval);
+      // One last read once generation ends, so the slides saved last are on
+      // screen even when the run was not started from this tab.
+      fetchCarousel();
+    };
+  }, [generationActive, fetchCarousel]);
 
   const handleAspectChange = async (ratio: AspectRatio) => {
     if (!carousel) return;
@@ -344,6 +355,9 @@ export default function CarouselEditorPage({ params }: PageProps) {
               carouselId={carousel.id}
               slideCount={carousel.slides.length}
               aspectRatio={carousel.aspectRatio}
+              generating={generationActive}
+              interrupted={generation.interrupted}
+              onAcceptInterrupted={generation.acceptSlides}
             />
           </div>
 

@@ -4,6 +4,13 @@ import { getCarousel } from "@/lib/carousels";
 import { exportAllSlides, describeExportFailure } from "@/lib/export-slides";
 import { buildSlidesPdf, PdfExportError } from "@/lib/export-pdf";
 import { parseExportFormat } from "@/lib/export-formats";
+import {
+  GENERATION_IN_PROGRESS_ERROR,
+  getInterruption,
+  interruptedExportError,
+  isGenerating,
+} from "@/lib/generation-status";
+import { dataErrorResponse } from "@/lib/api-errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +26,10 @@ export async function POST(
   const format = parseExportFormat(new URL(request.url).searchParams.get("format"));
   if (!format) {
     return NextResponse.json(
-      { error: 'Unknown export format. Use "png" for a ZIP of PNGs or "pdf" for a PDF.' },
+      {
+        error:
+          'Unknown export format. Use "png" for a ZIP of PNGs, "pdf" for a PDF, or "single-png" for the PNG of a one-slide carousel.',
+      },
       { status: 400 }
     );
   }
@@ -30,9 +40,51 @@ export async function POST(
     return NextResponse.json({ error: "Carousel not found" }, { status: 404 });
   }
 
+  // The design agent may still be adding or rewriting slides. Exporting now
+  // would package whatever happens to be saved mid-run.
+  if (isGenerating(carousel.id)) {
+    return NextResponse.json(
+      { error: GENERATION_IN_PROGRESS_ERROR },
+      { status: 409 }
+    );
+  }
+
+  // A run that was stopped, failed or timed out after changing slides may have
+  // left the carousel half-made. Its slides are kept, but they are not
+  // exported as though they were finished until the user confirms them.
+  let interruption;
+  try {
+    interruption = await getInterruption(carousel.id);
+  } catch (err) {
+    const dataError = dataErrorResponse(err);
+    if (dataError) return dataError;
+    throw err;
+  }
+  if (interruption) {
+    return NextResponse.json(
+      {
+        error: interruptedExportError(interruption.reason),
+        interrupted: interruption,
+      },
+      { status: 409 }
+    );
+  }
+
   if (carousel.slides.length === 0) {
     return NextResponse.json({ error: "No slides to export" }, { status: 400 });
   }
+
+  if (format === "single-png" && carousel.slides.length !== 1) {
+    return NextResponse.json(
+      {
+        error:
+          "A single PNG download is only available for a carousel with one slide. Use the PNG ZIP to download every slide.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const fileBase = `carousel-${carousel.name.replace(/[^a-zA-Z0-9-_]/g, "_")}`;
 
   try {
     // Export all slides to PNG buffers
@@ -40,6 +92,19 @@ export async function POST(
       carousel.slides,
       carousel.aspectRatio
     );
+
+    if (format === "single-png") {
+      // The exact bytes the ZIP would hold as slide-1.png, not re-encoded.
+      // `png` is the Node Buffer itself, so the copy covers its own bytes only,
+      // wherever they sit in a pooled allocation.
+      const [{ buffer: png }] = pngBuffers;
+      return new Response(new Uint8Array(png), {
+        headers: {
+          "Content-Type": "image/png",
+          "Content-Disposition": `attachment; filename="${fileBase}.png"`,
+        },
+      });
+    }
 
     if (format === "pdf") {
       // The PDF pages are the PNGs rendered above, so both formats show the
@@ -52,7 +117,7 @@ export async function POST(
       return new Response(new Uint8Array(pdfBytes), {
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="carousel-${carousel.name.replace(/[^a-zA-Z0-9-_]/g, "_")}.pdf"`,
+          "Content-Disposition": `attachment; filename="${fileBase}.pdf"`,
         },
       });
     }
@@ -88,7 +153,7 @@ export async function POST(
     return new Response(new Uint8Array(zipBuffer), {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="carousel-${carousel.name.replace(/[^a-zA-Z0-9-_]/g, "_")}.zip"`,
+        "Content-Disposition": `attachment; filename="${fileBase}.zip"`,
       },
     });
   } catch (error) {
