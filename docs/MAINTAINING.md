@@ -4,15 +4,15 @@ This document describes how Framewoven is developed, reviewed, and released.
 
 ## Canonical repository
 
-The canonical repository is https://github.com/manishkumarglobal/framewoven.
+The canonical repository is https://github.com/mk-global/framewoven.
 All development, Issues, pull requests, and releases happen there.
 
 A clone needs only one remote:
 
 ```bash
 git remote -v
-# origin  https://github.com/manishkumarglobal/framewoven.git (fetch)
-# origin  https://github.com/manishkumarglobal/framewoven.git (push)
+# origin  https://github.com/mk-global/framewoven.git (fetch)
+# origin  https://github.com/mk-global/framewoven.git (push)
 ```
 
 Framewoven does not keep an `upstream` remote and does not routinely synchronize with any other repository.
@@ -21,7 +21,41 @@ Where the code came from is recorded in [`PROVENANCE.md`](./PROVENANCE.md), not 
 ## No ticket, no work
 
 Every material product or engineering change starts as a GitHub Issue and lands through a pull request that references it, normally with `Closes #N`.
-Trivial administrative edits, such as a typo or a one-line ignore rule, do not need an Issue.
+Every change that reaches a protected PR must close at least one OPEN, admitted issue. Do not exempt documentation or administrative changes from the reviewer scope gate.
+
+## Ticket and PR admission — public repository
+
+Framewoven is an explicit public-repository exception in EngineeringToolsMK's `tools/repo-onboarding/inventory.json` (decision #234). CI uses GitHub-hosted runners. **Do not** add private self-hosted governance workflows, admit this repository to the private runner group, or run ordinary `onboard.py onboard/verify` against it. EngineeringToolsMK's organisation `onboard.py audit` verifies this exception.
+
+The canonical policy lives in private `mk-global/EngineeringToolsMK/tools/github-policy/validate.py` (`github-policy/v2.0.0`). Every linked engineering issue must be OPEN and contain non-empty Markdown sections with exactly these headings:
+
+- `Problem`
+- `Desired Outcome`
+- `Scope`
+- `Out of Scope`
+- `Acceptance Criteria` (at least one Markdown list item)
+- `Verification`
+- `Dependencies / Blockers`
+- `Risks / Constraints`
+
+Every PR description must contain `GitHub Issue` (with `Closes #N`), `Objective`, `Scope`, `Acceptance Criteria` (list item required), `Verification Evidence`, `Risk Assessment`, `Rollback`, and `Decisions / Deviations`. The templates under `.github/` provide **advisory** scaffolds; replace the HTML-comment instructions with actual content. GitHub API and cloud agents can bypass templates.
+
+Before publishing tickets or PRs, run the **canonical installed** validator (do not copy its rules into this repo):
+
+```bash
+# Run from the EngineeringToolsMK checkout, with GitHub access:
+gh issue view N --repo mk-global/framewoven --json body --jq .body | python3 tools/github-policy/validate.py ticket -
+gh issue view N --repo mk-global/framewoven --json state,body | python3 tools/github-policy/validate.py linked-ticket -
+gh pr view N --repo mk-global/framewoven --json body --jq .body | python3 tools/github-policy/validate.py pr -
+```
+
+For draft bodies not yet published, save the proposed Markdown to a temporary file and run `python3 tools/github-policy/validate.py ticket /path/to/draft.md` (or `pr` for a PR). Check **every** linked issue before opening a PR. These commands are author-side checks, not hard enforcement.
+
+**Actual merge enforcement:** the independent reviewer checks open linked tickets against the canonical policy (`scope: required`), and branch protection requires `local-ai/pr-review/main` pinned to reviewer GitHub App 4577329 with strict freshness. An invalid ticket can cause the reviewer to skip a PR **without publishing any status**. If the reviewer check is absent, validate the linked issues first; then check review queue/service if the issues are valid. Do not invoke manual rereviews as a substitute for ticket admission.
+
+**Reviewer infrastructure failures are different from ticket refusal.** A PR-scoped status such as `local-ai/pr-review/pr-<number>` with `containment_unverified` means the reviewer could not verify its own sandbox/tools and refused to run; this is **not** a code-review verdict. Do not modify application code, fake a PASS, or relax the required branch context to address it. Restore the reviewer through its EngineeringToolsMK operator procedure and verify doctor/isolation. A PR whose infrastructure failures exhausted its retry limit may require a new **substantive** head commit to trigger another review: first check the installed reviewer's supported recovery behavior and preserve the ticket/review requirements.
+
+Creation pathways differ: GitHub web UI uses the advisory templates; browser/cloud Claude or API clients must validate explicitly; local `mk-agent` uses the approved `mk-github` broker and should also validate before publication. Enforcement at client write-time and an explanatory non-authoritative reviewer status are tracked under Framewoven #24 and require separate reviewed EngineeringToolsMK changes. They are **not** yet active, and this documentation does not implement them.
 
 ## Branches
 
@@ -35,8 +69,8 @@ It cannot be deleted or force-pushed, and it changes only through a pull request
 ## Pull requests
 
 1. Open the pull request against `main` and reference its Issue with `Closes #N`.
-2. Describe what changed, why, how it was verified, and what is explicitly out of scope.
-3. Wait for the `typecheck / lint / test / build` check to pass.
+2. Use the canonical PR template. Describe objective, scope, acceptance criteria, verification evidence, risks, rollback, and decisions/deviations. The `GitHub Issue` section must include a closing reference.
+3. Wait for `typecheck / lint / test / build` and `local-ai/pr-review/main` from the pinned independent reviewer App to pass.
 4. Review the complete diff before merging, including documentation and tests.
 5. Squash-merge with a conventional title, which becomes the commit subject on `main`, for example `fix: surface export failures (#12)`.
 
