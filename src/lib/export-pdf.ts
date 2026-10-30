@@ -86,8 +86,8 @@ export async function buildSlidesPdf(
 
   const pdf = await PDFDocument.create();
   if (options.title) pdf.setTitle(options.title);
-  pdf.setCreator("Framewoven");
-  pdf.setProducer("Framewoven");
+  pdf.setCreator("CreatorBrio");
+  pdf.setProducer("CreatorBrio");
 
   for (const [index, png] of pngs.entries()) {
     const image = await pdf.embedPng(png);

@@ -73,7 +73,7 @@ beforeAll(async () => {
   originalCwd = process.cwd();
   originalHome = process.env.HOME;
   originalUrl = process.env.IMAGE_SERVICE_URL;
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-images-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-images-"));
   process.chdir(workdir);
   process.env.HOME = path.join(workdir, "home");
   server = createServer((req, res) => {

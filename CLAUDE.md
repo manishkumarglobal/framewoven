@@ -1,4 +1,6 @@
-# Framewoven
+# CreatorBrio
+
+Named Framewoven until #29; the repository keeps that name until the founder renames it (see `docs/MAINTAINING.md`).
 
 AI-powered creative studio for branded social content: design Instagram carousels by chatting with Claude. Next.js 16 + React 19 + TypeScript + Tailwind v4.
 

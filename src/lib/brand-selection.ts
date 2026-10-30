@@ -8,6 +8,7 @@
  * the brand its generations use.
  */
 
+// Keeps the product's former name: renaming the key would reset every saved selection.
 export const SELECTED_BRAND_KEY = "framewoven:selected-brand";
 
 /** The stored choice while that brand still exists, otherwise the default brand. */

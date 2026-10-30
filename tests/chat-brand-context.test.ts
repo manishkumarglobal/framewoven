@@ -53,7 +53,7 @@ const ORIGINAL_BRAND: BrandConfig = {
 beforeEach(async () => {
   spawned.length = 0;
   originalCwd = process.cwd();
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-chat-brand-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-chat-brand-"));
   await mkdir(path.join(workdir, "data"), { recursive: true });
   process.chdir(workdir);
   await writeFile(path.join(workdir, "data", "brand.json"), JSON.stringify(ORIGINAL_BRAND, null, 2));

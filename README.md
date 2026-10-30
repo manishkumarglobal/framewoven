@@ -1,26 +1,26 @@
 <div align="center">
 
-# Framewoven
+# CreatorBrio
 
 ### An AI-powered creative studio for branded social content.
 
 **Chat with Claude. Design on-brand Instagram carousels. Export pixel-exact PNGs.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-1a1a2e.svg?style=flat-square)](./LICENSE)
-[![CI](https://github.com/manishkumarglobal/framewoven/actions/workflows/ci.yml/badge.svg)](https://github.com/manishkumarglobal/framewoven/actions/workflows/ci.yml)
+[![CI](https://github.com/mk-global/framewoven/actions/workflows/ci.yml/badge.svg)](https://github.com/mk-global/framewoven/actions/workflows/ci.yml)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000.svg?style=flat-square)](https://nextjs.org)
 [![React 19](https://img.shields.io/badge/React-19-149eca.svg?style=flat-square)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6.svg?style=flat-square)](https://www.typescriptlang.org)
 
-![Framewoven dashboard](./docs/screenshots/dashboard.png)
+![CreatorBrio dashboard](./docs/screenshots/dashboard.png)
 
 </div>
 
 ---
 
-## What is Framewoven?
+## What is CreatorBrio?
 
-Framewoven is a local-first, AI-assisted tool for creating branded carousel content.
+CreatorBrio is a local-first, AI-assisted tool for creating branded carousel content.
 You describe what you want in a chat panel, and a Claude design agent writes each slide as HTML and CSS using your brand's colors, fonts, and style.
 Slides render live in the editor and export as PNGs at Instagram's exact pixel dimensions.
 
@@ -48,7 +48,7 @@ The agent can also read this app's local data through its API, and it may fetch 
 
 ## What you can do today
 
-![Framewoven editor](./docs/screenshots/editor.png)
+![CreatorBrio editor](./docs/screenshots/editor.png)
 
 - **Design slides by chatting.**
   The editor's chat panel sends your request to a Claude design agent, which creates, rewrites, or deletes slides in the open carousel.
@@ -76,7 +76,7 @@ The agent can also read this app's local data through its API, and it may fetch 
   When a design is built around a scene, such as a reel cover, the design agent can generate a photographic image with a local FLUX.2 Klein image service and place it in the slide's HTML like any other image.
   It decides this itself, and most typographic designs never call it.
   The image service is a separate program, started by hand when you want images (`tools/image-service` in EngineeringToolsMK), listening on `127.0.0.1:8791`.
-  Framewoven reads the service's token from `~/.config/framewoven/image-service.token`, a file readable only by the account Framewoven runs as (mode `600`).
+  CreatorBrio reads the service's token from `~/.config/framewoven/image-service.token`, a file readable only by the account CreatorBrio runs as (mode `600`); the path keeps the product's former name until the token is migrated.
   When the service is stopped, busy, or declines a request, the agent finishes the design without an image rather than guessing one.
 - **Reorder and undo.**
   Drag slides in the filmstrip to reorder them.
@@ -109,12 +109,12 @@ The agent can also read this app's local data through its API, and it may fetch 
 - **Node.js 20.9 or later**, with npm. Next.js 16 refuses to start on older versions.
 - **Git**, to clone the repository.
 - **Claude Code**, installed and signed in, for the design agent.
-  Framewoven runs the `claude` command-line tool on your machine, so the agent uses your existing Claude Code account and its usage limits.
+  CreatorBrio runs the `claude` command-line tool on your machine, so the agent uses your existing Claude Code account and its usage limits.
   Install it from the [Claude Code documentation](https://docs.anthropic.com/en/docs/claude-code), then run `claude` once to sign in.
   Each chat request is capped at USD 1.00 of Claude usage.
 - **About 300 MB of disk space** for the Chromium build that PNG export uses, downloaded during setup.
 
-Framewoven runs on macOS, Linux, and Windows.
+CreatorBrio runs on macOS, Linux, and Windows.
 
 Without Claude Code, the app still opens and you can set up your brand, manage carousels and templates, reorder and undo slides, and export existing slides.
 You cannot create new slide content, because slides are written by the design agent.
@@ -127,7 +127,7 @@ Later launches take seconds.
 ### With Claude Code (recommended)
 
 ```bash
-git clone https://github.com/manishkumarglobal/framewoven.git
+git clone https://github.com/mk-global/framewoven.git
 cd framewoven
 claude
 ```
@@ -145,7 +145,7 @@ Stop the server with `/stop`, which finds this checkout's server on whatever por
 ### Without Claude Code's slash commands
 
 ```bash
-git clone https://github.com/manishkumarglobal/framewoven.git
+git clone https://github.com/mk-global/framewoven.git
 cd framewoven
 npm run setup
 ```
@@ -179,7 +179,7 @@ Chat transcripts are stored in your browser's local storage for each carousel.
 Claude Code also keeps its own record of each design-agent session in its data directory, outside this project.
 Exports are not stored; each export is built in memory and downloaded as a ZIP of PNGs or a PDF.
 
-Updating Framewoven with `git pull` does not touch these files.
+Updating CreatorBrio with `git pull` does not touch these files.
 To back up your work, copy `data/`, `public/uploads/`, and `.env.local`.
 `/reset` deletes your carousels, templates, brands, style presets, and uploads and re-seeds empty defaults, after asking for confirmation.
 It does not touch browser local storage or Claude Code's session records.
@@ -225,7 +225,7 @@ Inside Claude Code:
 | Command | What it does |
 |---|---|
 | `/start [port]` | Set up if needed, launch the dev server in the background, and open the browser. Safe to re-run. |
-| `/stop [port]` | Stop this checkout's Framewoven server, whatever its port. With a port, stop that port's server only if it is this checkout's. Other applications and other worktrees' servers are never stopped; if this checkout runs several servers, it lists them and asks for a port. |
+| `/stop [port]` | Stop this checkout's CreatorBrio server, whatever its port. With a port, stop that port's server only if it is this checkout's. Other applications and other worktrees' servers are never stopped; if this checkout runs several servers, it lists them and asks for a port. |
 | `/reset` | Delete local carousels, templates, brand, style presets, and uploads, then re-seed defaults. Asks first. |
 | `/doctor` | Check Node, the Claude CLI, dependencies, data files, and port 3000. |
 
@@ -237,7 +237,7 @@ From a terminal:
 | `npm run dev` | Start the dev server. |
 | `npm run build` / `npm start` | Build and run a production server. |
 | `npm run doctor` | Run the environment check; works before `npm install`. |
-| `node scripts/stop-server.mjs [port]` | What `/stop` runs: stop this checkout's Framewoven server. macOS and Linux. |
+| `node scripts/stop-server.mjs [port]` | What `/stop` runs: stop this checkout's CreatorBrio server. macOS and Linux. |
 | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` | The quality gate CI runs on every pull request. |
 
 ## Architecture
@@ -304,13 +304,13 @@ Install Node 20.9 or later from [nodejs.org](https://nodejs.org) or with [nvm](h
 
 **The chat panel says to connect the Claude CLI.**
 Install Claude Code and sign in by running `claude` once.
-On macOS and Linux, Framewoven looks for `claude` in `~/.local/bin`, `/usr/local/bin`, `/opt/homebrew/bin`, `~/.npm-global/bin`, and on your `PATH`.
+On macOS and Linux, CreatorBrio looks for `claude` in `~/.local/bin`, `/usr/local/bin`, `/opt/homebrew/bin`, `~/.npm-global/bin`, and on your `PATH`.
 On Windows it looks in `%APPDATA%\npm`, `%LOCALAPPDATA%\Programs\claude`, and on your `PATH`.
 If yours is elsewhere, set `CLAUDE_CLI_PATH` in `.env.local` and restart the dev server.
 On Windows, `where claude` in PowerShell shows the path.
 
 **Port 3000 is in use.**
-Run `/stop 3000` to stop it if it is this checkout's Framewoven server (anything else on the port is left alone and named), or use another port with `/start 3001` or the `PORT` setting shown in [Install and run](#install-and-run).
+Run `/stop 3000` to stop it if it is this checkout's CreatorBrio server (anything else on the port is left alone and named), or use another port with `/start 3001` or the `PORT` setting shown in [Install and run](#install-and-run).
 
 **Export fails.**
 The editor shows the reason.
@@ -325,7 +325,7 @@ Select that brand on the dashboard, open its settings with the pencil button, an
 Brand details reach the design agent only when a brand name is set.
 
 **Something else.**
-Run `/doctor` or `npm run doctor` for an environment check, and [open an Issue](https://github.com/manishkumarglobal/framewoven/issues) if the problem persists.
+Run `/doctor` or `npm run doctor` for an environment check, and [open an Issue](https://github.com/mk-global/framewoven/issues) if the problem persists.
 
 ## Planned capabilities
 
@@ -338,7 +338,7 @@ Each will be tracked as an Issue and listed in the [changelog](./CHANGELOG.md) o
 
 ## Contributing
 
-Framewoven follows a no-ticket, no-work process: open an Issue first for anything material, and reference it from your pull request with `Closes #N`.
+CreatorBrio follows a no-ticket, no-work process: open an Issue first for anything material, and reference it from your pull request with `Closes #N`.
 Before opening a pull request, run the full gate:
 
 ```bash
@@ -350,9 +350,10 @@ npm run typecheck && npm run lint && npm test && npm run build
 
 ## Origin and license
 
-Framewoven was originally derived from [Open Carrusel](https://github.com/Hainrixz/open-carrusel), an MIT-licensed project, through a maintained fork.
+CreatorBrio was named Framewoven until 2026-10-30.
+It was originally derived from [Open Carrusel](https://github.com/Hainrixz/open-carrusel), an MIT-licensed project, through a maintained fork.
 It is now independently maintained.
 Its Git history, original authorship, and the original copyright notice are preserved.
 See [`docs/PROVENANCE.md`](./docs/PROVENANCE.md) for the source baseline, attribution, and historical records.
 
-Framewoven is released under the [MIT License](./LICENSE).
+CreatorBrio is released under the [MIT License](./LICENSE).

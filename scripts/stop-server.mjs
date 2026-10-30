@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Stop the Framewoven server this checkout is running, and nothing else.
+// Stop the CreatorBrio server this checkout is running, and nothing else.
 //
 // Pure Node, no dependencies.
 //
 // `/stop` used to kill whatever listened on port 3000. A server started with
 // `/start 3010` was left running, while an unrelated app on 3000, or another
-// worktree's Framewoven, was killed instead. A port number says nothing about
+// worktree's CreatorBrio, was killed instead. A port number says nothing about
 // who owns the process behind it, so this script decides from the process
 // itself. A listening process counts as this checkout's server only when all
 // of these hold:
@@ -105,7 +105,7 @@ export function parseProcNetTcp(text) {
 function realDir(dir) {
   try {
     // The native call also returns the on-disk letter case, which matters on
-    // macOS, where /Users/me/Framewoven and /Users/me/framewoven are one folder.
+    // macOS, where /Users/me/CreatorBrio and /Users/me/creatorbrio are one folder.
     return fs.realpathSync.native(dir);
   } catch {
     return null;
@@ -187,7 +187,7 @@ export const procProbe = {
 // Deciding. Pure functions of what the probe saw, so every case is testable.
 
 /**
- * "ours": this checkout's Framewoven server. "other-checkout": a Next.js
+ * "ours": this checkout's CreatorBrio server. "other-checkout": a Next.js
  * server of the same user running from another directory, such as another
  * worktree. "unrelated": anything else, including another user's process.
  * "gone": exited since it was listed.
@@ -201,7 +201,7 @@ export function classify(info, { root, uid }) {
 function describe({ pid, port, info, kind }) {
   const what = info ? info.command.replace(/\s+/g, " ").slice(0, 80) : "exited";
   const where =
-    kind === "other-checkout" ? `, Framewoven/Next.js from ${info.cwd}` : "";
+    kind === "other-checkout" ? `, CreatorBrio/Next.js from ${info.cwd}` : "";
   return `  :${port}  PID ${pid}  ${what}${where}`;
 }
 
@@ -227,7 +227,7 @@ export function planStop({ root, uid, port, listeners }) {
       return {
         action: "refuse",
         message:
-          `Port ${port} is not served by this checkout's Framewoven server (${root}), ` +
+          `Port ${port} is not served by this checkout's CreatorBrio server (${root}), ` +
           `so nothing was stopped:\n${others.map(describe).join("\n")}${hint}`,
       };
     }
@@ -252,14 +252,14 @@ export function planStop({ root, uid, port, listeners }) {
   if (pids.length === 0) {
     return {
       action: "none",
-      message: `No Framewoven server from this checkout (${root}) is running.${elsewhere}`,
+      message: `No CreatorBrio server from this checkout (${root}) is running.${elsewhere}`,
     };
   }
   if (pids.length > 1) {
     return {
       action: "ambiguous",
       message:
-        `Found ${pids.length} Framewoven servers from this checkout (${root}), so nothing was stopped:\n` +
+        `Found ${pids.length} CreatorBrio servers from this checkout (${root}), so nothing was stopped:\n` +
         `${ours.map(describe).join("\n")}\n` +
         "Run /stop <port> to choose which one to stop.",
     };
@@ -364,7 +364,7 @@ export async function main({
     );
     return 1;
   }
-  log(`Stopped the Framewoven server on ${ports} (PID ${signalled.join(", ")}).${plan.message}`);
+  log(`Stopped the CreatorBrio server on ${ports} (PID ${signalled.join(", ")}).${plan.message}`);
   return 0;
 }
 

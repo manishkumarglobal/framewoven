@@ -63,6 +63,8 @@ interface LiveRuns {
   started: Promise<void>;
 }
 
+// Keeps the product's former name: a running server that reloads this module
+// must find the same registry, or it would lose generations in progress.
 const REGISTRY_KEY = Symbol.for("framewoven.generation-status");
 
 function registry(): Map<string, LiveRuns> {

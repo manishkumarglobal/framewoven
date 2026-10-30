@@ -92,7 +92,7 @@ const legacyBytes = async () =>
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-brands-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-brands-"));
   await mkdir(path.join(workdir, "data"), { recursive: true });
   process.chdir(workdir);
   await seedLegacyInstallation();

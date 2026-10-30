@@ -22,7 +22,7 @@ const carouselsPath = () => path.join(workdir, "data", "carousels.json");
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-storage-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-storage-"));
   await mkdir(path.join(workdir, "data"), { recursive: true });
   process.chdir(workdir);
 });

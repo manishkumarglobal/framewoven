@@ -19,7 +19,7 @@ let originalCwd: string;
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-generation-status-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-generation-status-"));
   await mkdir(path.join(workdir, "data"), { recursive: true });
   await writeFile(
     path.join(workdir, "data", "brand.json"),

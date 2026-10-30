@@ -21,7 +21,7 @@ let originalCwd: string;
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  workdir = await mkdtemp(path.join(tmpdir(), "framewoven-contract-"));
+  workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-contract-"));
   await mkdir(path.join(workdir, "data"), { recursive: true });
   process.chdir(workdir);
 });

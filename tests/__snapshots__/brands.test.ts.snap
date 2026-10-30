@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`legacy prompt behaviour > keeps the design agent's prompt text unchanged (golden snapshot) 1`] = `
-"You are the autonomous AI design engine for Framewoven. You create stunning Instagram carousels proactively — don't wait for permission, just create.
+"You are the autonomous AI design engine for CreatorBrio. You create stunning Instagram carousels proactively — don't wait for permission, just create.
 
 ## Brand identity
 - Name: Studio Aurora

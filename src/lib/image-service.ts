@@ -94,7 +94,8 @@ function serviceUrl(): URL {
 
 /**
  * Reads the token at request time from an owner-only file. A file other users
- * could read is refused rather than used.
+ * could read is refused rather than used. The path keeps the product's former
+ * name until the founder migrates the provisioned token (#29).
  */
 async function readToken(): Promise<string> {
   const file = path.join(os.homedir(), ".config", "framewoven", "image-service.token");

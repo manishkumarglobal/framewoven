@@ -85,7 +85,7 @@ describe.skipIf(!chromium)("PDF export through the real slide renderer", () => {
 
     // Uploads and the font cache resolve from the working directory, so the
     // test uses a throwaway one rather than the real ./public and ./data.
-    workdir = await mkdtemp(path.join(tmpdir(), "framewoven-pdf-render-"));
+    workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-pdf-render-"));
     await mkdir(path.join(workdir, "public", "uploads"), { recursive: true });
     await mkdir(path.join(workdir, "data"), { recursive: true });
     const fixture = await sharp({

@@ -66,7 +66,7 @@ describe.skipIf(!chromium)("single PNG download through the real renderer", () =
     previousExecutable = process.env.PUPPETEER_EXECUTABLE_PATH;
     process.env.PUPPETEER_EXECUTABLE_PATH = chromium!;
 
-    workdir = await mkdtemp(path.join(tmpdir(), "framewoven-single-png-"));
+    workdir = await mkdtemp(path.join(tmpdir(), "creatorbrio-single-png-"));
     await mkdir(path.join(workdir, "public", "uploads"), { recursive: true });
     await mkdir(path.join(workdir, "data"), { recursive: true });
     await writeFile(

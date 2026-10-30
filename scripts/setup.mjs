@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Cross-platform setup for Framewoven. Runs on macOS, Linux, and Windows.
+// Cross-platform setup for CreatorBrio. Runs on macOS, Linux, and Windows.
 //
 // Pure Node, no dependencies, safe to run pre-`npm install`.
 // This file must never import a third-party package: it is the script that
@@ -232,7 +232,7 @@ function writeEnvLocal(claudePath) {
 }
 
 async function main() {
-  log("🎠 Setting up Framewoven...");
+  log("🎠 Setting up CreatorBrio...");
   log("");
 
   installDependencies();
@@ -272,7 +272,7 @@ async function main() {
     return;
   }
 
-  log("🚀 Starting Framewoven...");
+  log("🚀 Starting CreatorBrio...");
   log("  Open http://localhost:3000 in your browser");
   log("");
   runSync("npm", ["run", "dev"]);
