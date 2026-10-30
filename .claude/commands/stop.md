@@ -1,26 +1,30 @@
 ---
-description: Stop the local Framewoven dev server (defaults to :3000, accepts a port arg).
+description: Stop this checkout's Framewoven server, on whatever port it runs (accepts a port arg).
 argument-hint: [port]
-allowed-tools: Bash(lsof *), Bash(kill *), Bash(echo *)
+allowed-tools: Bash(node *)
 ---
 
-Port to stop: $ARGUMENTS (defaults to 3000 if empty).
+Port to stop (optional): $ARGUMENTS
 
-Run:
+Run this from the project root, exactly as written, with the argument quoted:
 
 ```bash
-# The harness substitutes a bare $ARGUMENTS, but not ${ARGUMENTS:-3000} - that
-# form reads an unset shell variable and silently always targets 3000.
-PORT="$ARGUMENTS"
-PORT="${PORT:-3000}"
-
-# Scope to listening sockets only. A bare `lsof -ti :$PORT` also matches any
-# process merely holding a client connection to that port, so an unscoped kill
-# can take down unrelated work that happens to be talking to this port.
-PIDS=$(lsof -nP -tiTCP:"$PORT" -sTCP:LISTEN 2>/dev/null)
-if [ -n "$PIDS" ]; then
-  echo "$PIDS" | xargs kill 2>/dev/null && echo "Stopped server on :$PORT (PIDs: $PIDS)."
-else
-  echo "Nothing was listening on :$PORT."
-fi
+node scripts/stop-server.mjs "$ARGUMENTS"
 ```
+
+Report the script's output to the user as it is. It is already short.
+
+The script decides what to stop. Without a port it finds the Framewoven server
+running from this checkout, whatever its port. With a port it stops that port's
+server only if it is this checkout's. A server qualifies only if it belongs to
+the current user, is a Next.js server process, and runs from this checkout's
+directory, so other applications and other worktrees' servers are never
+touched.
+
+When it refuses, do not stop anything yourself and do not fall back to `lsof`
+and `kill`. A refusal means one of two things:
+
+- the port belongs to something else, and the output names it;
+- this checkout runs more than one server, and the output lists their ports.
+
+In the second case, ask the user which port to stop and run `/stop <port>`.

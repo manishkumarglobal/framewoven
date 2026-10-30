@@ -134,7 +134,7 @@ Then, at the Claude Code prompt:
 
 `/start` installs dependencies, seeds empty data files, launches the dev server in the background, and opens http://localhost:3000.
 Pass a port to use a different one, for example `/start 3001`.
-Stop the server with `/stop`.
+Stop the server with `/stop`, which finds this checkout's server on whatever port it runs.
 
 ### Without Claude Code's slash commands
 
@@ -214,7 +214,7 @@ Inside Claude Code:
 | Command | What it does |
 |---|---|
 | `/start [port]` | Set up if needed, launch the dev server in the background, and open the browser. Safe to re-run. |
-| `/stop [port]` | Stop the server listening on that port, 3000 by default. |
+| `/stop [port]` | Stop this checkout's Framewoven server, whatever its port. With a port, stop that port's server only if it is this checkout's. Other applications and other worktrees' servers are never stopped; if this checkout runs several servers, it lists them and asks for a port. |
 | `/reset` | Delete local carousels, templates, brand, style presets, and uploads, then re-seed defaults. Asks first. |
 | `/doctor` | Check Node, the Claude CLI, dependencies, data files, and port 3000. |
 
@@ -226,6 +226,7 @@ From a terminal:
 | `npm run dev` | Start the dev server. |
 | `npm run build` / `npm start` | Build and run a production server. |
 | `npm run doctor` | Run the environment check; works before `npm install`. |
+| `node scripts/stop-server.mjs [port]` | What `/stop` runs: stop this checkout's Framewoven server. macOS and Linux. |
 | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` | The quality gate CI runs on every pull request. |
 
 ## Architecture
@@ -298,7 +299,7 @@ If yours is elsewhere, set `CLAUDE_CLI_PATH` in `.env.local` and restart the dev
 On Windows, `where claude` in PowerShell shows the path.
 
 **Port 3000 is in use.**
-Run `/stop` if it is a previous Framewoven server, or use another port with `/start 3001` or the `PORT` setting shown in [Install and run](#install-and-run).
+Run `/stop 3000` to stop it if it is this checkout's Framewoven server (anything else on the port is left alone and named), or use another port with `/start 3001` or the `PORT` setting shown in [Install and run](#install-and-run).
 
 **Export fails.**
 The editor shows the reason.

@@ -37,6 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GET /api/carousels/[id]/generation` reports `{ generating, interrupted }`, and `DELETE` on it accepts an interrupted carousel's slides.
   Carousels that are not being generated, and runs that changed nothing, export exactly as before.
 
+### Fixed
+
+- `/stop` now stops the Framewoven server this checkout is running, on whatever port, instead of whatever happened to listen on port 3000 (#19).
+  A server started with `/start 3010` is found without naming its port, and an unrelated application or another worktree's Framewoven on port 3000 is no longer stopped.
+  A process is stopped only if it belongs to you, is a Next.js server, and runs from this checkout's directory; anything else on a requested port is named and left running.
+  If one checkout runs more than one server, `/stop` lists them and asks for a port rather than guessing.
+  `/stop <port>` still works, and now stops only this checkout's server on that port.
+
 ## [0.1.3] - 2026-10-27
 
 The first standalone Framewoven release.
