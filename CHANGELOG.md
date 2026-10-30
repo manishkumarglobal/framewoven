@@ -20,6 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A PDF above LinkedIn's 100 MB limit is refused with a message saying what to change.
 - `POST /api/carousels/[id]/export?format=pdf` returns that PDF.
   A request without `format`, or with `format=png`, still returns the ZIP of PNGs, and an unknown format is rejected with status 400.
+- Direct PNG download for single-slide carousels (#21).
+  When a carousel has exactly one slide, such as a reel cover, the Export menu also offers **Instagram · PNG**, which downloads that slide as an ordinary `.png` file with no ZIP to extract.
+  It is the same image, byte for byte, that the PNG ZIP contains, in every aspect ratio.
+  `POST /api/carousels/[id]/export?format=single-png` returns it, and refuses a carousel with more than one slide with status 400.
+
+### Fixed
+
+- Export is no longer offered while the design agent is still creating or changing slides (#20).
+  Exporting during that window could download a half-finished carousel.
+  The Export button now reads **Waiting for slides…** until the agent's run has ended, in every open editor tab, including one opened before the generation started.
+  A run that was stopped (with Stop, a page reload or a closed tab), failed or timed out after changing slides no longer passes for a finished carousel.
+  Its slides are all kept, but the Export button reads **Incomplete** and explains what happened, and export waits until you either choose **Use these slides** or ask the agent to continue and it finishes.
+  This survives a reload and a server restart; a run cut short by the server stopping counts as interrupted too.
+  The export API refuses a carousel in either state with status 409 and a message saying why.
+  `GET /api/carousels/[id]/generation` reports `{ generating, interrupted }`, and `DELETE` on it accepts an interrupted carousel's slides.
+  Carousels that are not being generated, and runs that changed nothing, export exactly as before.
 
 ### Fixed
 
