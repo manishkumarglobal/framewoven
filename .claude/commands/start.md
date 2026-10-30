@@ -27,9 +27,9 @@ User-supplied port (optional): $ARGUMENTS
    - Run `OC_SETUP_NO_DEV=1 npm run setup` with a 600s timeout. The env var tells the setup script to skip its own dev-server start (`/start` manages the server itself in step 5). On Windows PowerShell use `$env:OC_SETUP_NO_DEV=1; npm run setup`; on cmd.exe use `set OC_SETUP_NO_DEV=1 && npm run setup`.
    - On failure, surface the error and stop.
 
-4. **Handle port collision.** If `<port>` is in use, first check whether it is already CreatorBrio (named CreatorBrio before #29, which an
+4. **Handle port collision.** If `<port>` is in use, first check whether it is already CreatorBrio (named Framewoven before #29, which an
    instance that has not reloaded since may still show):
-   `curl -s http://localhost:<port> | grep -qE "CreatorBrio|CreatorBrio"`.
+   `curl -s http://localhost:<port> | grep -qE "CreatorBrio|Framewoven"`.
    - If it is, the server is already up. Skip to step 7 and report normally. Do not
      restart it and do not ask the user anything.
    - Otherwise ask via AskUserQuestion: "Port `<port>` is in use. Kill the existing process or pick a different port?" Options: Kill / Different port / Cancel.

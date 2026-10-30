@@ -17,6 +17,8 @@ const chatRoute = readFileSync(
   path.join(repoRoot, "src/app/api/chat/route.ts"),
   "utf-8"
 );
+const startCommand = readFileSync(path.join(repoRoot, ".claude/commands/start.md"), "utf-8");
+const layout = readFileSync(path.join(repoRoot, "src/app/layout.tsx"), "utf-8");
 
 /** The tool names the chat route actually passes to the Claude CLI. */
 function allowedToolsInChatRoute(): string[] {
@@ -90,5 +92,23 @@ describe("the generated system prompt agrees with the docs", () => {
     expect(prompt).toContain(`Slides: 1/${MAX_SLIDES}`);
     const stated = claudeMd.match(/Max (\d+) slides per carousel/);
     expect(Number(stated![1])).toBe(MAX_SLIDES);
+  });
+});
+
+describe("/start recognizes a running instance", () => {
+  // /start greps the served page to decide whether the port already runs this
+  // app. An instance that has not reloaded since the rename still shows the
+  // former name, and must not be offered for killing.
+  const pattern = startCommand.match(/grep -qE "([^"]+)"/);
+  const title = layout.match(/title: "([^"]+)"/);
+
+  it("matches the page title the app serves", () => {
+    expect(pattern, "start.md should grep the served page").not.toBeNull();
+    expect(title, "layout.tsx should set a title").not.toBeNull();
+    expect(new RegExp(pattern![1]).test(`<title>${title![1]}</title>`)).toBe(true);
+  });
+
+  it("still matches an instance showing the former name", () => {
+    expect(new RegExp(pattern![1]).test("<title>Framewoven - AI Creative Studio</title>")).toBe(true);
   });
 });
